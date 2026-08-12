@@ -4,6 +4,13 @@ default_language_version:
   python: python3.14
 
 repos:
+  - repo: https://github.com/fauust/pre-commit-shell
+    rev: v1.0
+    hooks:
+    - id: shellcheck
+      args: ["-x"]
+    - id: shfmt
+      args: ["-d", "-i", "2", "-ci"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

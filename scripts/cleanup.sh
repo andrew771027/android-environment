@@ -7,9 +7,10 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
 
-echo "Deleting AVD: $(AVD_NAME)"
+echo "Deleting AVD: ${AVD_NAME}"
 
 avdmanager delete avd \
-    --nmae "${AVD_NAME}"
+    --name "${AVD_NAME}"
 
+echo
 echo "Done."

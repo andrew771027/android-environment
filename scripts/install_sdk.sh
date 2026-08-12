@@ -19,7 +19,7 @@ echo "Arch: ${ARCH}"
 
 if ! command -v sdkmanager >/dev/null 2>&1; then
     echo "ERROR: sdkmanager not founds."
-    echo "Install Android COmmand Line Tools first."
+    echo "Install Android Command Line Tools first."
     exit 1
 fi
 
@@ -45,7 +45,7 @@ case "${OS}-${ARCH}" in
     Darwin-x86_64)
         SYSTEM_IMAGE="${MAC_X86_SYSTEM_IMAGE}"
         ;;
-    
+
     Linux-x86_64)
         SYSTEM_IMAGE="${LINUX_SYSTEM_IMAGE}"
         ;;
@@ -62,7 +62,7 @@ echo "  ${SYSTEM_IMAGE}"
 echo
 echo "[4/4] Installing Android system image..."
 
-sdkmanager "${SYSTEM_IAMGE}"
+sdkmanager "${SYSTEM_IMAGE}"
 
 echo
 echo "SDK installation complete."

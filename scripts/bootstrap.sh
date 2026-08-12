@@ -6,6 +6,9 @@ echo "=============================="
 echo " Android Environment Boostrap "
 echo "=============================="
 
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
 OS="OS:     ${OS}"
 ARCH="Arch: ${ARCH}"
 

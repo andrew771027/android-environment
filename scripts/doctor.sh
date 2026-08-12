@@ -5,23 +5,22 @@ set -u
 PASS=0
 FAIL=0
 
-check_command(){
+
+check_command() {
 
     local command_name="$1"
 
     printf "%-15s" "${command_name}"
 
-    if command -v "{command_name}" >/dev/null 2>&1; then
+    if command -v "${command_name}" >/dev/null 2>&1; then
         echo "OK"
-        PASS=$((PASS +1))
-    
+        PASS=$((PASS + 1))
     else
         echo "MISSING"
-        FAIL=$((FAIL +1))
+        FAIL=$((FAIL + 1))
     fi
-
-
 }
+
 
 echo "================================"
 echo " Android Environment Doctor"
@@ -44,11 +43,11 @@ echo "Connected devices:"
 adb devices 2>/dev/null || true
 
 echo
-echo "Available AVDs"
+echo "Available AVDs:"
 emulator -list-avds 2>/dev/null || true
 
 echo
-echo "---------------------------------"
+echo "--------------------------------"
 echo "PASS=${PASS}"
 echo "FAIL=${FAIL}"
 

@@ -7,6 +7,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
 
+
 echo "Starting Android Emulator..."
 echo "AVD: ${AVD_NAME}"
 
