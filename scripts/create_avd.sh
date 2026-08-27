@@ -6,48 +6,76 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
+source "${PROJECT_ROOT}/scripts/lib/common.sh"
+source "${PROJECT_ROOT}/scripts/lib/platform.sh"
 
-OS="$(uname -s)"
-ARCH="$(uname -m)"
+HOST_OS="$(detect_os)"
+HOST_ARCH="$(detect_arch)"
 
-case "${OS}-${ARCH}" in
-    Darwin-arm64)
-        SYSTEM_IMAGE="${MAC_ARM_SYSTEM_IMAGE}"
-        ;;
+ANDROID_IMAGE_ARCH="$(
+    resolve_system_image_arch \
+        "${HOST_OS}" \
+        "${HOST_ARCH}"
+)"
 
-    Darwin-x86_64)
-        SYSTEM_IMAGE="${MAC_X86_SYSTEM_IMAGE}"
-        ;;
-
-    Linux-x86_64)
-        SYSTEM_IMAGE="${LINUX_SYSTEM_IMAGE}"
-        ;;
-
-    *)
-        echo "Unsupported platform: ${OS}-${ARCH}"
-        exit 1
-        ;;
-esac
+SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};#${ANDROID_IMAGE_ARCH}"
 
 
-echo "Creating AVD:"
-echo "  name:   ${AVD_NAME}"
-echo "  device: ${AVD_DEVICE}"
-echo "  image:  ${SYSTEM_IMAGE}"
+echo "======================================"
+echo " Create Android AVD "
+echo "======================================"
 
+echo
+echo "name:   ${AVD_NAME}"
+echo "device: ${AVD_DEVICE}"
+echo "image:  ${SYSTEM_IMAGE}"
 
-if avdmanager list avd | grep -q "Name: ${AVD_NAME}"; then
-    echo
-    echo "AVD already exists."
+# ------------------------------------------
+# Validate system image
+# ------------------------------------------
+
+if ! package_is_installed "${SYSTEM_IMAGE}"; then
+
+    die "System image not installed:
+
+${SYSTEM_IMAGE}
+
+Run:
+
+make install-sdk"
+fi
+
+# -------------------------------------------
+# Idempotent AVD creation
+# -------------------------------------------
+
+if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
+
+    log_ok "AVD already exists: ${AVD_NAME}"
+
     exit 0
 fi
 
+echo
+
+log_info "Create AVD: ${AVD_NAME}"
 
 echo "no" | avdmanager create avd \
     --name "${AVD_NAME}" \
     --package "${SYSTEM_IMAGE}" \
     --device "${AVD_DEVICE}"
 
+# -------------------------------------------
+# Validate
+# -------------------------------------------
 
-echo
-echo "AVD created successfully."
+
+if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
+
+    log_ok "AVD created: ${AVD_NAME}"
+
+else
+
+    die "AVD creation failed ${AVD_NAME}"
+
+fi

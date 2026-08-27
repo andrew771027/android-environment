@@ -6,63 +6,89 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
+source "${PROJECT_ROOT}/scripts/lib/common.sh"
+source "${PROJECT_ROOT}/scripts/lib/platform.sh"
 
-OS="$(uname -s)"
-ARCH="$(uname -m)"
 
 echo "=============================="
 echo " Android SDK Installation"
 echo "=============================="
 
-echo "OS:   ${OS}"
-echo "Arch: ${ARCH}"
+# ----------------------------------------
+# Precondtions
+# ----------------------------------------
 
-if ! command -v sdkmanager >/dev/null 2>&1; then
-    echo "ERROR: sdkmanager not founds."
-    echo "Install Android Command Line Tools first."
-    exit 1
+
+if ! command_exists sdkmanagers; then
+    die "sdkmanager not found.
+    Expected:
+
+    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager
+
+    Install Android Command Line Tools firsts."
 fi
 
-echo
-echo "[1/4] Accepting licens..."
+# ---------------------------------------
+# Detect platform
+# ---------------------------------------
 
-yes | sdkmanager --licenses >/dev/null || true
+HOME_OS="$(detect_os)"
+HOME_ARCH="$(detect_arch)"
 
-echo
-echo "[2/4] Installing core SDK tools..."
+if [[ "${HOST_OS}" == "unsupported" ]]; then
+    die "Unsupported operating system"
+fi
 
-sdkmanager \
-    "platform-tools" \
-    "emulator" \
-    "${ANDROID_PLATFORM}"
+if [[ "${HOST_ARCH}" == "unsupported" ]]; then
+    die "Unsupported architecture"
+fi
 
-case "${OS}-${ARCH}" in
+ANDROID_IMAGE_ARCH="$(
+    resolve_system_image_arch \
+        "${HOST_OS}" \
+        "${HOST_ARCH}"
+)"
 
-    Darwin-arm64)
-        SYSTEM_IMAGE="${MAC_ARM_SYSTEM_IMAGE}"
-        ;;
+if [[ "${ANDROID_IMAGE_ARCH}" == "unsupported" ]]; then
+    die "Unsupported platform: ${HOME_OS}-${HOME_ARCH}"
+fi
 
-    Darwin-x86_64)
-        SYSTEM_IMAGE="${MAC_X86_SYSTEM_IMAGE}"
-        ;;
-
-    Linux-x86_64)
-        SYSTEM_IMAGE="${LINUX_SYSTEM_IMAGE}"
-        ;;
-    *)
-
-        echo "Unsupported platform: ${OS}-${ARCH}"
-        exit 1
-        ;;
-esac
-
-echo "System image:"
-echo "  ${SYSTEM_IMAGE}"
+SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};#${ANDROID_IMAGE_ARCH}"
 
 echo
-echo "[4/4] Installing Android system image..."
-
-sdkmanager "${SYSTEM_IMAGE}"
+log_info "Host OS: ${HOST_OS}"
+log_info "Host architecture: ${HOST_ARCH}"
+log_info "Android image architecture: ${ANDROID_IMAGE_ARCH}"
 
 echo
-echo "SDK installation complete."
+log_info "Pinned Android API: ${ANDROID_API_LEVEL}"
+log_info "System image: ${SYSTEM_IMAGE}"
+
+# ----------------------------------------
+# Licenses
+# ----------------------------------------
+
+echo
+log_info "checking Android SDK packages"
+
+while IFS= read -r package; do
+
+    [[ -z "${package}" ]] && continue
+    [[ "${package}" =~ ^# ]] && continue
+
+    install_package "${package}"
+
+done < "${PROJECT_ROOT}/config/packages.txt"
+
+# ----------------------------------------
+# System image
+# ----------------------------------------
+
+install_package "${ANDROID_PLATFORM}"
+
+install_package "${SYSTEM_IMAGE}"
+
+echo
+echo "==================================="
+echo " SDK configuration complete"
+echo "==================================="
