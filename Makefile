@@ -15,10 +15,13 @@ emulator:
 doctor:
 	./scripts/doctor.sh
 
+validate:
+	./scripts/validate_environment.sh
+
 devices:
 	adb devices
 
-shell: 
+shell:
 	adb shell
 
 clean:

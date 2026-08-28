@@ -1,6 +1,6 @@
 # Android Emulator Guide
 
-This document explains the Android Virtual Device (AVD) lifecycle used by Android Environment v0.1.
+This document explains the Android Virtual Device (AVD) lifecycle used by Android Environment v0.2.
 
 The goal is not only to launch an emulator, but to understand the relationship between:
 
@@ -55,7 +55,7 @@ emulator = execution engine
 AVD      = virtual device configuration
 ```
 
-## 2. Cookbook v0.1 Baseline
+## 2. v0.2 Baseline
 
 ```text
 AVD name:    cookbook_pixel_api_36
@@ -192,7 +192,7 @@ emulator \
   -no-audio
 ```
 
-Do not make headless mode the main v0.1 workflow. First make the normal interactive emulator reliable.
+Headless mode is optional in v0.2. First make the normal interactive emulator reliable.
 
 ## 10. Check Hardware Acceleration
 
@@ -295,7 +295,7 @@ done
 echo "Android boot completed"
 ```
 
-This is a useful candidate for Android Environment v0.2 or v0.3.
+This runtime boot check complements the v0.2 provisioning validator, which does not require a running emulator.
 
 ## 14. Verify Device Information
 
@@ -466,15 +466,16 @@ Try updating the emulator package first:
 sdkmanager --update
 ```
 
-If debugging a graphics-specific problem, Android Emulator also exposes command-line GPU options. Keep such overrides out of the default v0.1 configuration unless they are required on your workstation.
+If debugging a graphics-specific problem, Android Emulator also exposes command-line GPU options. Keep machine-specific overrides out of the default v0.2 configuration unless required.
 
 ## 20. Recommended Lifecycle Script Evolution
 
-Android Environment v0.1:
+Android Environment v0.2 currently provides:
 
 ```text
 create_avd.sh
 start_emulator.sh
+validate_environment.sh
 ```
 
 A later version can evolve into:

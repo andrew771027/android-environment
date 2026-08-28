@@ -1,0 +1,3 @@
+platform-tools
+emulator
+platforms;android-36

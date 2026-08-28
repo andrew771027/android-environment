@@ -1,5 +1,7 @@
 # Android SDK、ADB、Fastboot、Emulator、AVD 與 Kotlin / Java 關係整理
 
+本文件對應 Android Environment v0.2，說明環境內各項 Android 工具與 App 開發技術的角色分工。
+
 ## 1. 先建立整體心智模型
 
 在 Android 開發與測試環境中，可以先把整體分成兩個世界：

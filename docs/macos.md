@@ -1,6 +1,6 @@
 # Android Environment on macOS
 
-This guide prepares a macOS workstation for Android Environment v0.1 and Android Cookbook v0.1.
+This guide prepares a macOS workstation for Android Environment v0.2 and Android Cookbook.
 
 The preferred setup is command-line first. Android Studio is optional.
 
@@ -322,6 +322,12 @@ Or simply:
 
 ```bash
 make doctor
+```
+
+Run the v0.2 strict provisioning check with:
+
+```bash
+make validate
 ```
 
 ## 16. Common Problems
