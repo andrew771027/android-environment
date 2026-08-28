@@ -80,7 +80,7 @@ else
 fi
 
 
-SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};#${ANDROID_IMAGE_ARCH}"
+SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};${ANDROID_IMAGE_ARCH}"
 
 
 # ----------------------------------------------
@@ -120,7 +120,7 @@ echo
 echo "Tools"
 echo "-----"
 
-TOOS=(
+TOOLS=(
     java
     sdkmanager
     avdmanager
@@ -129,7 +129,7 @@ TOOS=(
     emulator
 )
 
-for tool in "${TOOL[@]}"; do
+for tool in "${TOOLS[@]}"; do
 
     if command_exists "${tool}"; then
         pass "${tool}"

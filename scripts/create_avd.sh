@@ -18,17 +18,31 @@ ANDROID_IMAGE_ARCH="$(
         "${HOST_ARCH}"
 )"
 
-SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};#${ANDROID_IMAGE_ARCH}"
+SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};${ANDROID_IMAGE_ARCH}"
 
 
 echo "======================================"
-echo " Create Android AVD "
+echo " Create Android AVD"
 echo "======================================"
 
 echo
 echo "name:   ${AVD_NAME}"
 echo "device: ${AVD_DEVICE}"
 echo "image:  ${SYSTEM_IMAGE}"
+
+
+# ------------------------------------------
+# Validate required tools
+# ------------------------------------------
+
+if ! command_exists avdmanager; then
+    die "avdmanager not found."
+fi
+
+if ! command_exists emulator; then
+    die "emulator not found."
+fi
+
 
 # ------------------------------------------
 # Validate system image
@@ -45,9 +59,10 @@ Run:
 make install-sdk"
 fi
 
-# -------------------------------------------
+
+# ------------------------------------------
 # Idempotent AVD creation
-# -------------------------------------------
+# ------------------------------------------
 
 if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
 
@@ -56,19 +71,38 @@ if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
     exit 0
 fi
 
-echo
 
-log_info "Create AVD: ${AVD_NAME}"
+# ------------------------------------------
+# Validate hardware profile
+# ------------------------------------------
+
+if avdmanager list device -c 2>/dev/null | grep -Fxq "${AVD_DEVICE}"; then
+
+    log_ok "Hardware profile found: ${AVD_DEVICE}"
+
+else
+
+    die "Hardware profile not found: ${AVD_DEVICE}"
+
+fi
+
+
+# ------------------------------------------
+# Create AVD
+# ------------------------------------------
+
+echo
+log_info "Creating AVD: ${AVD_NAME}"
 
 echo "no" | avdmanager create avd \
-    --name "${AVD_NAME}" \
-    --package "${SYSTEM_IMAGE}" \
-    --device "${AVD_DEVICE}"
+    -n "${AVD_NAME}" \
+    -k "${SYSTEM_IMAGE}" \
+    -d "${AVD_DEVICE}"
 
-# -------------------------------------------
-# Validate
-# -------------------------------------------
 
+# ------------------------------------------
+# Validate result
+# ------------------------------------------
 
 if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
 
@@ -76,6 +110,6 @@ if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
 
 else
 
-    die "AVD creation failed ${AVD_NAME}"
+    die "AVD creation failed: ${AVD_NAME}"
 
 fi

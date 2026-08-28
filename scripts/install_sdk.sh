@@ -19,7 +19,7 @@ echo "=============================="
 # ----------------------------------------
 
 
-if ! command_exists sdkmanagers; then
+if ! command_exists sdkmanager; then
     die "sdkmanager not found.
     Expected:
 
@@ -32,8 +32,8 @@ fi
 # Detect platform
 # ---------------------------------------
 
-HOME_OS="$(detect_os)"
-HOME_ARCH="$(detect_arch)"
+HOST_OS="$(detect_os)"
+HOST_ARCH="$(detect_arch)"
 
 if [[ "${HOST_OS}" == "unsupported" ]]; then
     die "Unsupported operating system"
@@ -50,10 +50,10 @@ ANDROID_IMAGE_ARCH="$(
 )"
 
 if [[ "${ANDROID_IMAGE_ARCH}" == "unsupported" ]]; then
-    die "Unsupported platform: ${HOME_OS}-${HOME_ARCH}"
+    die "Unsupported platform: ${HOST_OS}-${HOST_ARCH}"
 fi
 
-SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};#${ANDROID_IMAGE_ARCH}"
+SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};${ANDROID_IMAGE_ARCH}"
 
 echo
 log_info "Host OS: ${HOST_OS}"
