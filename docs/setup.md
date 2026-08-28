@@ -1,6 +1,6 @@
 # Android Environment Setup
 
-This document is the main setup guide for the **Android Environment** repository used by **Android Cookbook v0.1**.
+This document is the main setup guide for **Android Environment v0.2**, used by **Android Cookbook**.
 
 The goal is to prepare a reproducible command-line Android workstation with:
 
@@ -49,7 +49,7 @@ macOS / Linux
             adb
              │
              ▼
-      Android Cookbook v0.1
+      Android Cookbook
 ```
 
 ## 2. Repository Layout
@@ -57,9 +57,13 @@ macOS / Linux
 ```text
 android-environment/
 ├── config/
-│   └── android.env
+│   ├── android.env
+│   └── packages.txt
 ├── docs/
 │   ├── setup.md
+│   ├── configuration.md
+│   ├── architecture_detection.md
+│   ├── validation.md
 │   ├── macos.md
 │   ├── linux.md
 │   └── emulator.md
@@ -69,15 +73,19 @@ android-environment/
 │   ├── create_avd.sh
 │   ├── start_emulator.sh
 │   ├── doctor.sh
+│   ├── validate_environment.sh
+│   ├── lib/
+│   │   ├── common.sh
+│   │   └── platform.sh
 │   └── cleanup.sh
 ├── .gitignore
 ├── Makefile
-└── README.md
+└── readme.md
 ```
 
 ## 3. Baseline
 
-Android Environment v0.1 uses the following project baseline:
+Android Environment v0.2 uses the following project baseline:
 
 ```text
 Android:       Android 16
@@ -86,6 +94,7 @@ AVD name:      cookbook_pixel_api_36
 Device type:   Pixel-family AVD
 Android Studio: optional
 Physical Pixel: optional
+Host detection: macOS/Linux, ARM64/x86_64
 ```
 
 These values are project defaults rather than requirements of Android itself.
@@ -153,7 +162,7 @@ Or, if the Makefile is available:
 make bootstrap
 ```
 
-The bootstrap step should validate basic workstation dependencies such as Java, `unzip`, shell environment, and `ANDROID_HOME`.
+The bootstrap step checks Java and `unzip`, resolves `ANDROID_HOME`, and creates the SDK directory when needed.
 
 ## 7. Install Android SDK Packages
 
@@ -172,7 +181,7 @@ sdkmanager \
   "platforms;android-36"
 ```
 
-The repository's `install_sdk.sh` should additionally select an appropriate Android 16 system image for the host CPU architecture.
+The repository's `install_sdk.sh` selects the Android 16 system image for the detected host OS and CPU architecture.
 
 View installed packages:
 
@@ -276,13 +285,21 @@ emulator       OK
 
 ANDROID_HOME=/Users/example/Android/Sdk
 
-Connected devices:
+AVDs:
+cookbook_pixel_api_36
+
+Devices:
 List of devices attached
 emulator-5554 device
-
-Available AVDs:
-cookbook_pixel_api_36
 ```
+
+For strict provisioning checks:
+
+```bash
+make validate
+```
+
+Unlike `doctor`, validation checks the host mapping, SDK directory, installed packages, and configured AVD, and exits non-zero on failure. See [validation.md](./validation.md).
 
 ## 13. Start Android Cookbook v0.1
 
@@ -318,7 +335,7 @@ Android Cookbook
 
 ## 14. Physical Pixel Devices
 
-A physical Pixel is optional for v0.1.
+A physical Pixel is optional for v0.2.
 
 The emulator is sufficient for early Cookbook topics such as:
 
@@ -346,7 +363,7 @@ Use a physical device later for areas where hardware behavior matters, for examp
 
 ## 15. Definition of Done
 
-Android Environment v0.1 is complete when all of the following work:
+Android Environment v0.2 is complete when all of the following work:
 
 - [ ] Java is available.
 - [ ] `sdkmanager` is available.
@@ -359,7 +376,8 @@ Android Environment v0.1 is complete when all of the following work:
 - [ ] The emulator can boot.
 - [ ] `adb devices` reports the emulator as `device`.
 - [ ] `adb shell` works.
-- [ ] `make doctor` passes.
+- [ ] `make doctor` reports the expected tools and devices.
+- [ ] `make validate` reports `FAIL=0`.
 
 ## 16. Next
 

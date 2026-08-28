@@ -1,6 +1,6 @@
 # Android Environment on Linux
 
-This guide prepares a Linux workstation for Android Environment v0.1 and Android Cookbook v0.1.
+This guide prepares a Linux workstation for Android Environment v0.2 and Android Cookbook.
 
 The examples use Ubuntu/Debian-style package commands. Adjust package installation commands for other distributions.
 
@@ -299,11 +299,11 @@ Then verify:
 - The RSA debugging prompt was accepted.
 - Linux USB permissions permit access to the device.
 
-For Android Cookbook v0.1, a physical device remains optional.
+For Android Cookbook, a physical device remains optional.
 
 ## 15. Headless / Remote Linux Workstations
 
-Do not start with this mode for v0.1 unless necessary.
+Do not start with this mode unless necessary.
 
 A remote workstation often introduces extra concerns:
 
@@ -328,7 +328,7 @@ emulator \
   -no-audio
 ```
 
-This is a useful future step for CI and Device Test Platform experiments, but it is not required for Android Environment v0.1.
+This remains optional; the v0.2 launcher starts an interactive emulator by default.
 
 ## 16. Useful Checks
 
@@ -348,6 +348,12 @@ Or:
 
 ```bash
 make doctor
+```
+
+Run the v0.2 strict provisioning check with:
+
+```bash
+make validate
 ```
 
 ## 17. Common Problems
