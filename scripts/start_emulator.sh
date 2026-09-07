@@ -44,7 +44,7 @@ fi
 # Idempotent start
 # -----------------------------------------
 
-if is_emulator_boot_complete; then
+if is_emulator_boot_completed; then
 
     serial="$(get_emulator_serial)"
 
@@ -77,6 +77,7 @@ else
         )
     fi
 
+    # & 代表 Emulator 在背景執行，並將輸出導向 emulator.log
     emulator "${EMULATOR_ARGS[@]}" \
         >"${PROJECT_ROOT}/emulator.log" \
         2>&1 &
@@ -89,16 +90,17 @@ fi
 
 if wait_for_emulator_boot\
     "${EMULATOR_BOOT_TIMEOUT_SECONDS}" \
-    "${EMULATOR_BOOT_POLL_INTERVAL_SECONDS}"; then
+    "${EMULATOR_BOOT_POLL_INTERVAL_SECONDS}"
+then
 
-    serial="$(get_emulaotor_serial)"
+    serial="$(get_emulator_serial)"
 
     echo
     log_ok "Android Emulator ready"
 
     echo
-    echo "AVD: ${AVD_NAME}"
-    echo "Serial: ${serial}"
+    echo "AVD:      ${AVD_NAME}"
+    echo "Serial:   ${serial}"
 
 else
 

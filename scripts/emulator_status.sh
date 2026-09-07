@@ -19,21 +19,23 @@ if [[ -z "${serial}" ]]; then
 
     echo
     echo "State: STOPPED"
-    echo "AVD: ${AVD_NAME}"
+    echo "AVD:   ${AVD_NAME}"
 
     exit 0
 fi
 
-if is_emulator_boot_complete; then
+if is_emulator_boot_completed; then
 
     echo
-    echo "State: READY"
+    echo "State:  READY"
+    echo "AVD:    ${AVD_NAME}"
     echo "Serial: ${serial}"
 
 else
 
     echo
-    echo "State: BOOTING"
+    echo "State:  BOOTING"
+    echo "AVD:    ${AVD_NAME}"
     echo "Serial: ${serial}"
 
 fi

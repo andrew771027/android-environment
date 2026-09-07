@@ -4,8 +4,10 @@
 .vscode/
 
 *.log
+emulator.log
 
 .env
 
 tmp/
 build/
+
