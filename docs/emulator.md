@@ -61,7 +61,7 @@ AVD      = virtual device configuration
 AVD name:    cookbook_pixel_api_36
 Android:     Android 16
 API:         36
-Device:      Pixel-family profile
+Device:      pixel_7
 ```
 
 The exact system-image ABI depends on the host architecture and package availability.
@@ -117,7 +117,7 @@ echo "no" | avdmanager create avd \
   --device "$AVD_DEVICE"
 ```
 
-The script should be idempotent:
+The script checks the required tools and system image, then skips creation when the configured AVD already exists:
 
 ```text
 AVD does not exist
@@ -164,12 +164,12 @@ emulator @cookbook_pixel_api_36
 Repository command:
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 ## 8. Start Without Loading an Old Snapshot
 
-For a deterministic learning environment, the repository may initially use:
+By default, `start_emulator.sh` passes both `-no-snapshot-load` and `-no-boot-anim`. The snapshot option can also be used directly:
 
 ```bash
 emulator \
@@ -179,7 +179,7 @@ emulator \
 
 This avoids loading an earlier emulator snapshot at startup while still keeping the setup simple.
 
-For more reproducible automation later, consider explicit cold-boot/reset policies.
+`make emulator-reset` implements user-data reset with `-wipe-data`; it also passes `-no-snapshot-load` and `-no-boot-anim`. This removes installed apps and user settings from the configured AVD.
 
 ## 9. Headless Emulator
 
@@ -283,7 +283,15 @@ Typical completed state:
 1
 ```
 
-A simple shell wait loop:
+The repository provides a bounded polling command that does not launch an emulator:
+
+```bash
+make emulator-wait
+```
+
+It uses a 180-second configured wait budget and a 2-second polling interval. `make emulator-start` already performs this wait. See [lifecycle implementation](./emulator-lifecycle.md) for timing and device-selection limitations.
+
+For comparison, this manual shell loop has no timeout and assumes one attached device:
 
 ```bash
 adb wait-for-device
@@ -347,7 +355,13 @@ This becomes important later when Android Cookbook and Device Test Runner suppor
 
 ## 16. Stop the Emulator
 
-Preferred ADB command:
+Repository command (selects the first online emulator):
+
+```bash
+make emulator-stop
+```
+
+To explicitly select a serial, use:
 
 ```bash
 adb -s emulator-5554 emu kill
@@ -376,7 +390,7 @@ Repository command:
 make clean
 ```
 
-The cleanup script should delete only AVD resources owned by this project. It should not delete the user's entire Android SDK.
+The cleanup script runs `avdmanager delete avd` for `AVD_NAME`; it does not remove the SDK or stop a running emulator first. Stop the emulator before deleting its AVD.
 
 ## 18. Cold Boot / State Reset
 
@@ -468,32 +482,19 @@ sdkmanager --update
 
 If debugging a graphics-specific problem, Android Emulator also exposes command-line GPU options. Keep machine-specific overrides out of the default v0.2 configuration unless required.
 
-## 20. Recommended Lifecycle Script Evolution
+## 20. Implemented Lifecycle Commands
 
-Android Environment v0.2 currently provides:
+| Command | Script | Behavior |
+| --- | --- | --- |
+| `make emulator-start` | `start_emulator.sh` | Validate tools/AVD, launch if needed, wait for boot |
+| `make emulator-wait` | `wait_for_emulator.sh` | Poll boot readiness without starting a process |
+| `make emulator-status` | `emulator_status.sh` | Print STOPPED, BOOTING, or READY |
+| `make emulator-stop` | `stop_emulator.sh` | Send `emu kill`, then wait for disconnection |
+| `make emulator-reset` | `reset_emulator.sh` | Stop an online emulator, wipe configured AVD data, restart and wait |
 
-```text
-create_avd.sh
-start_emulator.sh
-validate_environment.sh
-```
+The shared implementation is [`scripts/lib/emulator.sh`](../scripts/lib/emulator.sh). Device discovery selects the first online emulator, without checking its AVD name. A process that is offline or not yet visible to ADB is not detected as connected. Use one emulator for the repository workflow; use explicit `adb -s SERIAL` commands when working with multiple devices.
 
-A later version can evolve into:
-
-```text
-EmulatorManager
-│
-├── create
-├── start
-├── wait_for_device
-├── wait_for_boot
-├── health_check
-├── stop
-├── reset
-└── delete
-```
-
-This is intentionally similar to process/device lifecycle management in a test runner, but Android Environment should remain responsible for environment/device provisioning rather than test scenario orchestration.
+See [lifecycle details](./emulator-lifecycle.md) and [test coverage and troubleshooting](./testing.md).
 
 ## 21. Cookbook Handoff
 
