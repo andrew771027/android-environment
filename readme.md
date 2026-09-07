@@ -32,13 +32,12 @@ make bootstrap
 make install-sdk
 make create-avd
 make validate
-make emulator
+make emulator-start
 ```
 
 In another terminal:
 
 ```bash
-adb wait-for-device
 adb devices
 adb shell getprop ro.build.version.sdk
 ```
@@ -52,7 +51,12 @@ The expected SDK level is `36`.
 | `make bootstrap` | Check basic host dependencies and create the SDK directory |
 | `make install-sdk` | Install pinned packages and the host-compatible system image |
 | `make create-avd` | Create the configured AVD if it does not exist |
-| `make emulator` | Start the AVD without loading an old snapshot |
+| `make emulator-start` | Start the AVD or reuse an online emulator, then wait for boot completion |
+| `make emulator-wait` | Wait for Android boot completion without launching an emulator |
+| `make emulator-status` | Report STOPPED, BOOTING, or READY |
+| `make emulator-stop` | Stop the first online emulator through ADB |
+| `make emulator-reset` | Wipe the configured AVD user data, launch it, and wait for boot |
+| `make test` | Run all pytest tests, including integration tests |
 | `make doctor` | Show tool, AVD, and connected-device availability |
 | `make validate` | Strictly validate host, tools, packages, and AVD |
 | `make devices` | List devices visible to ADB |
@@ -60,6 +64,23 @@ The expected SDK level is `36`.
 | `make clean` | Delete only the configured project AVD |
 
 `doctor` is informational. `validate` reports pass/fail counts and exits non-zero when provisioning is incomplete.
+
+## Emulator readiness and tests
+
+`make emulator-start` waits until `sys.boot_completed` is `1`. The default polling interval is 2 seconds and the configured wait budget is 180 seconds. Emulator output is written to `emulator.log` in the project root.
+
+The lifecycle scripts select the first `emulator-*` entry with ADB state `device`; they do not verify its AVD name. Use one online emulator for this workflow. `make emulator-reset` clears user data, while `make clean` deletes the configured AVD.
+
+For an existing project virtual environment, run from the repository root:
+
+```bash
+source script.sh
+python -m pytest -v -m "not integration"
+make emulator-start
+python -m pytest -v -m integration
+```
+
+The suite currently contains 6 mock tests and 2 integration tests. Integration tests require SDK tools on `PATH`, the configured baseline AVD, and an already booted emulator. A pytest marker labels tests; it does not exclude them from `make test`. See [testing](./docs/testing.md) for environment setup and failure diagnosis.
 
 ## Configuration
 
@@ -73,8 +94,10 @@ Defaults live in [`config/android.env`](./config/android.env); the static packag
 - [Validation and doctor](./docs/validation.md)
 - [macOS setup](./docs/macos.md)
 - [Linux setup](./docs/linux.md)
-- [Emulator lifecycle](./docs/emulator.md)
-- [Android ecosystem concepts](./docs/android_ecoystem.md)
+- [Emulator guide](./docs/emulator.md)
+- [Emulator lifecycle implementation](./docs/emulator-lifecycle.md)
+- [Testing and troubleshooting](./docs/testing.md)
+- [Android ecosystem concepts](./docs/android_ecosystem.md)
 
 ## v0.2 Highlights
 
