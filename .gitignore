@@ -10,4 +10,4 @@ emulator.log
 
 tmp/
 build/
-
+__pycache__/

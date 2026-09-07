@@ -12,7 +12,7 @@ COMMON_LIB = PROJECT_ROOT / "scripts" / "lib" / "common.sh"
 def make_fake_command(directory: Path, name: str, content: str) -> Path:
     command = directory / name
 
-    command.write_text(content, enconding='"utf-8')
+    command.write_text(content, encoding="utf-8")
 
     command.chmod(0o755)
 
@@ -81,7 +81,7 @@ if [[ "$1" == "devices" ]]; then
     echo "List of devices attached"
     echo "ABC123    device"
 fi
-""",
+"""
     )
 
     env = build_env(fake_bin)
@@ -124,8 +124,9 @@ if [[ "$1" == "-s" ]]; then
 
     exit 0
 fi
-""",
+"""
     )
+
 
     env = build_env(fake_bin)
 
@@ -143,7 +144,7 @@ fi
     )
 
     assert result.returncode == 0
-    assert "READY" in result.stdout
+    assert result.stdout.strip() == "READY"
 
 
 def test_emulator_not_bnoot_completed(tmp_path: Path):
@@ -171,8 +172,9 @@ if [[ "$1" == "-s" ]]; then
 
     exit 0
 fi
-""",
+"""
     )
+
 
     env = build_env(fake_bin)
 
@@ -204,7 +206,7 @@ def test_boot_complated_returns_false_when_no_emulator(tmp_path: Path):
         """#!/usr/bin/env bash
 
 echo "List of devices attached"
-""",
+"""
     )
 
     env = build_env(fake_bin)
@@ -240,11 +242,11 @@ if [[ "$1" == "devices" ]]; then
     echo "List of devices attached"
     exit 0
 fi
-""",
+"""
     )
 
     env = build_env(fake_bin)
-    result = (
+    result = run_bash(
         f"""
 source "{COMMON_LIB}"
 source "{EMULATOR_LIB}"
@@ -259,4 +261,4 @@ fi
     )
 
     assert result.returncode == 0
-    assert "TIOMEOUT" in result.stdout
+    assert result.stdout.splitlines()[-1] == "TIMEOUT"

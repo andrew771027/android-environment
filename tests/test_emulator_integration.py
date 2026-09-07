@@ -30,7 +30,10 @@ def test_running_emulator_is_boot_completed():
         if line.startswith("emulator-") and line.endswith("device")
     ]
 
-    assert emulator_lines
+    assert emulator_lines, (
+        "No online emulator found. Run `make emulator-start` before integration tests."
+        f"\nadb devices output:\n{devices.stdout}"
+    )
 
     serial = emulator_lines[0].split()[0]
 
@@ -41,4 +44,7 @@ def test_running_emulator_is_boot_completed():
         check=True,
     )
 
-    assert result.stdout.strip() == "1"
+    assert result.stdout.strip() == "1", (
+        f"Emulator {serial} has not finished booting. Run `make emulator-wait`."
+        f"\nsys.boot_completed: {result.stdout!r}"
+    )

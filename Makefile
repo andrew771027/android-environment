@@ -53,10 +53,10 @@ shell:
 test:
 	pytest -v tests
 
-	# Mock Emulator測試
-	# pytest -m "not integration"
-	# 真實Emulator測試
-	# pytest -m integration
+# Mock Emulator測試
+# pytest -m "not integration"
+# 真實Emulator測試
+# pytest -m integration
 
 clean:
 	./scripts/cleanup.sh
