@@ -23,7 +23,7 @@ install-sdk:
 create-avd:
 	./scripts/create_avd.sh
 
-emulator:
+emulator-start:
 	./scripts/start_emulator.sh
 
 emulator-wait:

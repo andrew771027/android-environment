@@ -61,6 +61,6 @@ then
 
 else
 
-    die "Emulator reset timed out after ${EMULATOR_BOOT_TIMEOUT_SECONDS} seconds."
+    die "Emulator reset timeout"
 
 fi

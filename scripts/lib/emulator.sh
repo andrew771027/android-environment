@@ -8,8 +8,8 @@ set -u
 
 get_emulator_serial(){
 
-    adb devices \
-        \ awk '$1 ~/ ^emulator-/ && $2 == "device" {print $1; exit}'
+    #awk regex: ^emulator- : emulator serial starts with "emulator-" and $2 == "device" : device is connected and ready
+    adb devices | awk '$1 ~ /^emulator-/ && $2 == "device" {print $1; exit}'
 
 }
 
@@ -21,8 +21,9 @@ is_emulator_connected(){
 
     local serial
 
-    serial = "$(get_emulator_serial)"
+    serial="$(get_emulator_serial)"
 
+    # serial is non-empty if emulator is connected
     [[ -n "${serial}" ]]
 
 }
@@ -31,23 +32,26 @@ is_emulator_connected(){
 # Is Android boot complete?
 # -----------------------------------------
 
-is_emulator_boot_complete(){
+is_emulator_boot_completed(){
 
     local serial
 
-    serial="${get_emulator_serial}"
+    serial="$(get_emulator_serial)"
 
+    # serial is empty if emulator is not connected
     if [[ -z "${serial}" ]]; then
+
         return 1
+
     fi
 
-    localo boot_completed
+    local boot_completed
 
     boot_completed="$(
 
         adb -s "${serial}" \
             shell getprop sys.boot_completed \
-            2 > /dev/null \
+            2>/dev/null \
             | tr -d '\r'
     )"
 
@@ -69,7 +73,8 @@ wait_for_emulator_boot(){
 
     while ((elapsed < timeout_seconds)); do
 
-        if is_emulator_boot_complete; then
+        if is_emulator_boot_completed; then
+
             local serial
 
             serial="$(get_emulator_serial)"
@@ -84,6 +89,7 @@ wait_for_emulator_boot(){
         elapsed=$((elapsed + poll_interval_seconds))
 
         log_info "Waiting... ${elapsed}/${timeout_seconds}s"
+
     done
 
     return 1

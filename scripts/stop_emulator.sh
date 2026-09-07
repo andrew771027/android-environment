@@ -35,7 +35,7 @@ elapsed=0
 
 while (( elapsed < timeout_seconds )); do
 
-    if ! is_emulator_conntected; then
+    if ! is_emulator_connected; then
 
         log_ok "Emulator stopped."
 

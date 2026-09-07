@@ -11,7 +11,7 @@ echo "================================"
 echo " Wait For Android Emulator "
 echo "================================"
 
-if ! command_exists adbl; then
+if ! command_exists adb; then
     die "adb command not found."
 fi
 
