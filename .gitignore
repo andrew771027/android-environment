@@ -1,7 +1,6 @@
 .DS_Store
 .idea/
 .venv
-.vscode/
 
 *.log
 emulator.log
@@ -11,3 +10,7 @@ emulator.log
 tmp/
 build/
 __pycache__/
+
+*.pyc
+
+download/
