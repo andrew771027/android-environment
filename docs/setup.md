@@ -1,6 +1,10 @@
-# Android Environment Setup
+# Android Environment v0.4 Setup
 
-This document is the main setup guide for **Android Environment v0.2**, used by **Android Cookbook**.
+This document is the main setup guide for **Android Environment**, used by **Android Cookbook**. It combines the existing local workstation setup with the **v0.4 Linux / KVM / headless CI** workflow.
+
+The v0.4 package is an **overlay** for the v0.3 repository, not a replacement for older Cookbook scripts. Back up or commit v0.3, copy the v0.4 files into the repository, and review changes before merging. The overlay's `config/android.env` adds CI settings; retain your own non-CI v0.3 settings if used elsewhere.
+
+For Linux headless CI, follow [v0.4 Linux / CI Setup](#v04-linux--ci-setup) below. For a local workstation, follow sections 1–16; v0.3 remains the local Mac workflow.
 
 The goal is to prepare a reproducible command-line Android workstation with:
 
@@ -85,7 +89,7 @@ android-environment/
 
 ## 3. Baseline
 
-Android Environment v0.2 uses the following project baseline:
+The local workstation workflow uses the following project baseline:
 
 ```text
 Android:       Android 16
@@ -169,8 +173,11 @@ The bootstrap step checks Java and `unzip`, resolves `ANDROID_HOME`, and creates
 After Android Command-Line Tools are installed:
 
 ```bash
+sdkmanager --licenses
 make install-sdk
 ```
+
+Review and accept the Android SDK licenses before installing packages.
 
 Equivalent SDK packages typically include:
 
@@ -187,12 +194,6 @@ View installed packages:
 
 ```bash
 sdkmanager --list_installed
-```
-
-Accept Android SDK licenses when required:
-
-```bash
-yes | sdkmanager --licenses
 ```
 
 ## 8. Verify Command-Line Tools
@@ -229,7 +230,7 @@ See [emulator.md](./emulator.md) for the complete emulator lifecycle.
 ## 10. Start the Emulator
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or directly:
@@ -335,7 +336,7 @@ Android Cookbook
 
 ## 14. Physical Pixel Devices
 
-A physical Pixel is optional for v0.2.
+A physical Pixel is optional for the local workstation workflow.
 
 The emulator is sufficient for early Cookbook topics such as:
 
@@ -363,7 +364,7 @@ Use a physical device later for areas where hardware behavior matters, for examp
 
 ## 15. Definition of Done
 
-Android Environment v0.2 is complete when all of the following work:
+The local workstation setup is complete when all of the following work. For Linux headless CI, also complete the [v0.4 definition of done](#v04-definition-of-done).
 
 - [ ] Java is available.
 - [ ] `sdkmanager` is available.
@@ -387,3 +388,71 @@ Continue with:
 2. [Linux Setup](./linux.md)
 3. [Emulator Guide](./emulator.md)
 4. Android Cookbook v0.1 Recipe 001 — Device Discovery
+
+## v0.4 Linux / CI Setup
+
+Run the following commands from the repository root on the Linux host. The Linux command-line-tools installer must not be run on macOS.
+
+The Makefile provides all v0.4 entry points, including `linux-tools`. CI port, serial, stop timeout, and polling defaults are defined in `config/android.env`. A real Linux / KVM run is still required to validate the headless workflow.
+
+### Step 1: Host / KVM
+
+Use Ubuntu 24.04 x86_64 with `/dev/kvm` available and accessible to the runner user. Follow [linux-kvm.md](./linux-kvm.md) for host prerequisites and permissions. Prepare Java and the host dependencies before installing SDK tools.
+
+### Step 2: SDK command-line tools
+
+`make linux-tools` downloads a specific official Google command-line-tools Linux ZIP and validates its SHA-256. If the installer finds an existing executable `sdkmanager`, it skips the download; that path does not revalidate the existing installation's checksum.
+
+Review Android SDK licenses and accept them via `sdkmanager --licenses` before installing SDK packages:
+
+```bash
+make linux-tools
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+sdkmanager --licenses
+make install-sdk
+```
+
+### Step 3: Provision AVD
+
+```bash
+make create-avd
+emulator -list-avds
+```
+
+The Linux CI baseline uses API 36 / `google_apis` / `x86_64` / Pixel 7 (`pixel_7`), with AVD name `cookbook_pixel_api_36`. If `avdmanager` reports the known `devices.xml` lookup message, verify the AVD profile and creation state; do not invent an XML file or silently select a different profile.
+
+### Step 4: Validate and smoke
+
+```bash
+make kvm-check
+make headless-smoke
+```
+
+Expected successful log: `[INFO] Smoke PASS: ...` followed by owned-emulator cleanup. Emulator logs after launch: `artifacts/emulator.log`; preflight failures may occur before this file exists.
+
+Read [headless-lifecycle.md](./headless-lifecycle.md) for readiness checks, AVD identity verification, timeouts, and cleanup. Use an isolated runner with no other running emulator; the v0.4 workflow reserves port 5554 and serial `emulator-5554`.
+
+### Step 5: Unit tests
+
+```bash
+python -m pip install pytest
+make unit-test
+```
+
+The offline unit tests do not require an Android SDK, KVM, or a running emulator.
+
+### GitHub Actions
+
+After completing and reviewing the overlay integration, commit `.github/workflows/android-headless.yml` along with the required scripts, configuration, Makefile targets, and tests, then push. The `unit` job does not require KVM, while `headless` does. If the hosted runner lacks `/dev/kvm`, choose an appropriately configured runner instead of deleting the KVM check.
+
+The workflow uploads diagnostics from `artifacts/`, including on failure.
+
+### v0.4 Definition of Done
+
+- [ ] Command-line tools checksum verified.
+- [ ] API 36 image provisioned and AVD exists.
+- [ ] KVM validation passes on Linux.
+- [ ] Headless emulator reaches `sys.boot_completed=1` with expected AVD identity.
+- [ ] Smoke test passes and the owned emulator process is cleaned up.
+- [ ] Offline unit tests pass; CI logs are uploaded on failure.

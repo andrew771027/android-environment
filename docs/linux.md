@@ -250,7 +250,7 @@ cookbook_pixel_api_36
 Desktop Linux:
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or:

@@ -1,6 +1,8 @@
-# 測試指南
+# 測試指南（含 v0.4）
 
 測試使用 pytest 執行 Python 測試，再透過 subprocess 呼叫 Bash 或 Android SDK 工具。依據 [pytest.ini](../pytest.ini)，`integration` marker 表示測試需要真實 Android SDK 或 emulator。
+
+本文件保留既有本機 emulator 測試說明，並整合 v0.4 的離線 CI 單元測試、Linux / KVM headless smoke 與 GitHub Actions 流程。環境安裝請參考 [setup.md](./setup.md)。
 
 ## 準備 Python 環境
 
@@ -26,12 +28,12 @@ source script.sh
 | --- | --- | --- |
 | Mock 測試 | `python -m pytest -v -m "not integration"` | Python、pytest、Bash 與基本 shell 工具；不需要真實 emulator |
 | 整合測試 | `python -m pytest -v -m integration` | SDK 工具、baseline AVD、已開機的 emulator |
-| 全部測試 | `python -m pytest -v tests` 或 `make test` | 同整合測試；make 使用 PATH 中的 pytest |
+| 全部測試 | `python -m pytest -v tests` | 同整合測試 |
 | 單一 timeout 測試 | `python -m pytest -v tests/test_emulator_lib.py::test_wait_for_emulator_boot_timeout` | 同 Mock 測試 |
 
-Marker 只分類測試，不會自動跳過。`make test` 執行全部測試，沒有 emulator 時整合測試會失敗。
+Marker 本身不會自動跳過測試。`make unit-test` 與其別名 `make test` 使用 `python -m pytest -q -m "not integration" tests`，只執行離線案例；全部測試請使用 `python -m pytest -v tests`。
 
-## Mock 測試：6 個案例
+## 既有 lifecycle Mock 測試：6 個案例
 
 [test_emulator_lib.py](../tests/test_emulator_lib.py) 在 pytest 的 `tmp_path` 建立可執行的假 `adb`，將其目錄放在複製後的 `PATH` 最前面，再用 Bash source 真正的 `scripts/lib/emulator.sh`。測試不會呼叫真實 adb，也不會啟動或停止真實 emulator。
 
@@ -160,6 +162,73 @@ python -m pytest -v -m integration
 
 若尚未安裝系統映像，先依 [README](../readme.md) 完成 SDK 安裝。`make emulator-start` 本身會等待開機；若 emulator 已由其他方式啟動，可先執行 `make emulator-wait`。腳本與測試適合一次使用一台 online emulator。
 
+## v0.4 Unit（不需要 Android 相依套件）
+
+啟用前述 Python 環境後，離線測試入口為：
+
+```bash
+python -m pip install pytest
+make unit-test
+```
+
+[Makefile](../Makefile) 已提供 `unit-test`、`headless-smoke` 與 `linux-tools`。只執行 v0.4 單元測試：
+
+```bash
+python -m pytest -v tests/test_ci_emulator.py
+```
+
+[test_ci_emulator.py](../tests/test_ci_emulator.py) 在 `tmp_path/bin` 建立可執行的假 `adb`，並在啟動 Bash 時把該目錄加到 `PATH` 最前面。這是在可執行指令邊界注入相依性，設計上以假 adb 回應測試真正的 Bash 邏輯，不需要 SDK、KVM 或真實 Android 裝置。
+
+測試共用 `build_env` 準備子程序環境、`run_bash` 執行 Bash、`run` 呼叫函式庫，以及 `run_smoke` 執行 smoke 腳本。`fake_ready_adb` 提供預設成功回應，個別案例只覆寫 `TEST_BOOT`、`TEST_AVD`、`TEST_API` 或 `TEST_DELETE_STATUS`，讓測試本身聚焦於情境與斷言。
+
+| 案例 | 驗證內容 |
+| --- | --- |
+| 開機成功 | 同時確認開機完成與預期 AVD identity |
+| 開機逾時 | `sys.boot_completed` 未變成 `1` 時失敗 |
+| AVD identity 不符 | 拒絕名稱與設定不同的 AVD |
+| 已存在 emulator | 即使現有 emulator 為 offline，也拒絕使用非隔離環境 |
+| 實體 Pixel 篩選 | 實體裝置不算作既有 emulator |
+| Timeout 設定 | 接受正整數，拒絕 `0` 與非數字 |
+| Smoke 成功 | 以假 adb 模擬 API、開機狀態與檔案讀回結果 |
+| API 不符 | 拒絕與設定 API level 不一致的裝置 |
+
+另有回歸案例驗證 adb 查詢失敗、只對指定 PID 執行 TERM/KILL，以及假 adb 優先順序與刪檔失敗。Launcher 案例在暫存專案中替代 KVM 檢查並使用假 SDK 工具，驗證啟動參數、log、成功／失敗退出碼和自己啟動的程序清理；它不驗證真實 KVM。`smoke_test.sh` 將 SDK 路徑附加於 PATH 尾端，保留測試注入的假 adb 優先順序。
+
+## v0.4 Integration / smoke（需要 Linux x86_64、KVM 與 SDK）
+
+依 [Linux / KVM prerequisites](./linux-kvm.md) 與 [setup.md](./setup.md) 準備 Ubuntu 24.04 x86_64、SDK 和設定中的 AVD，後執行：
+
+```bash
+make kvm-check
+make headless-smoke
+```
+
+Headless 流程會啟動自己的 emulator、等待 `sys.boot_completed=1`、核對 AVD identity，再執行 [smoke_test.sh](../scripts/smoke_test.sh)。Smoke 除了確認裝置可由 adb 存取，也會檢查設定的 API level（預設 36）與開機狀態，並在 `/data/local/tmp` 寫入暫存內容、讀回比對，最後明確刪除檔案；刪除指令失敗會使測試失敗。EXIT trap 在失敗路徑再次嘗試清理。
+
+成功時預期看到 `[INFO] Smoke PASS: ...`，接著清理此流程啟動的 emulator。Emulator 診斷紀錄保留於 `artifacts/emulator.log`。隔離、逾時與程序清理細節請見 [headless-lifecycle.md](./headless-lifecycle.md)。
+
+此流程需要沒有其他 emulator 執行中的隔離 runner，與前述要求事先啟動 emulator 的 `pytest -m integration` 是不同入口。
+
+## v0.4 CI
+
+[android-headless.yml](../.github/workflows/android-headless.yml) 定義快速離線 `unit` job，以及獨立的真實 emulator `headless` job。Headless job 的設定流程如下：
+
+1. 準備 Java、主機相依套件與 KVM 存取權限。
+2. 下載官方固定版本的 Linux command-line-tools ZIP，驗證 SHA-256；安裝器若找到既有 `sdkmanager` 則略過下載與校驗。
+3. 接受 SDK licenses、安裝 SDK 套件並建立設定中的 AVD。
+4. 檢查 KVM，執行 headless smoke。
+5. 使用 `if: always()` 上傳 `artifacts/` 中的 emulator logs，包含測試失敗時的紀錄。
+
+Unit job 使用 Python 3.14 與專案宣告的 pytest 範圍。Workflow 存在不代表 CI 已通過。若 runner 缺少 `/dev/kvm`，應改用具備 KVM 的 runner，保留 KVM 檢查。
+
+離線單元測試結果無法證明真實 emulator / KVM 整合成功。最終狀態需查看對應版本的 GitHub Actions run、各 job 結果與上傳紀錄。
+
 ## 驗證紀錄
 
-本次對話修正後曾執行 Mock 測試，結果為 `6 passed, 2 deselected`。當時 AVD 清單有 `cookbook_pixel_api_36`，但 `adb devices` 沒有裝置，因此未宣稱整合測試通過。此紀錄反映當時環境；目前結果請重新執行上述命令確認。
+2026-09-21，在 macOS、專案 Python 3.14 虛擬環境執行：
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" make unit-test
+```
+
+結果為 `18 passed, 2 deselected`：6 個既有 lifecycle Mock 案例與 12 個 CI 案例通過，2 個真實 SDK / emulator integration 案例被排除。這份結果涵蓋本次修正後的工作目錄，不代表 Linux / KVM smoke 或 GitHub Actions 已通過。

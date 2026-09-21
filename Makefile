@@ -1,8 +1,12 @@
 .PHONY: \
 	bootstrap \
+	linux-tools \
 	install-sdk \
 	create-avd \
-	emulator \
+	kvm-check \
+	headless-smoke \
+	unit-test \
+	emulator-start \
 	emulator-wait \
 	emulator-status \
 	emulator-stop \
@@ -16,6 +20,15 @@
 
 bootstrap:
 	./scripts/bootstrap.sh
+
+kvm-check:
+	./scripts/check_kvm.sh
+
+linux-tools:
+	./scripts/install_cmdline_tools_linux.sh
+
+headless-smoke:
+	./scripts/run_headless_smoke.sh
 
 install-sdk:
 	./scripts/install_sdk.sh
@@ -50,8 +63,11 @@ devices:
 shell:
 	adb shell
 
-test:
-	pytest -v tests
+unit-test:
+	python -m pytest -q -m "not integration" tests
+
+# Alias kept for convenience.
+test: unit-test
 
 # Mock Emulator測試
 # pytest -m "not integration"
