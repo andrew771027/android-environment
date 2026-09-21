@@ -53,6 +53,18 @@ make create-avd
 make validate
 ```
 
-Changing `AVD_NAME` changes which AVD `make emulator` starts and `make clean` deletes. Cleanup does not delete the SDK or unrelated AVDs.
+Changing `AVD_NAME` changes which AVD `make emulator-start` starts and `make clean` deletes. Cleanup does not delete the SDK or unrelated AVDs.
 
 Keep portable defaults in `android.env`, static packages in `packages.txt`, and machine-specific SDK paths in the shell environment. Do not commit SDK contents or AVD data.
+
+
+## Linux headless CI settings
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `EMULATOR_PORT` | `5554` | Reserved console port |
+| `EMULATOR_SERIAL` | `emulator-5554` | Explicit ADB target |
+| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Grace period before TERM, then KILL |
+| `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | CI boot polling interval |
+
+CI shares `EMULATOR_BOOT_TIMEOUT_SECONDS=180` with the local workflow. Local polling uses the separate `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` setting. Edit the configuration file to change timeout defaults; CI requires the fixed port/serial pair above.

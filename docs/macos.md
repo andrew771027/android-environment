@@ -251,7 +251,7 @@ cookbook_pixel_api_36
 ## 12. Start the Emulator
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or:

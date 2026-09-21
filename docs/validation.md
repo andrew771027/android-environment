@@ -34,7 +34,7 @@ make bootstrap
 make install-sdk
 make create-avd
 make validate
-make emulator
+make emulator-start
 ```
 
 After launch, check runtime health separately:
