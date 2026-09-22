@@ -48,13 +48,13 @@ emulator-reset:
 	./scripts/reset_emulator.sh
 
 headless-start:
-	./scripts/start_headless.sh
+	./scripts/headless_start.sh
 
 headless-status:
-	./scripts/status_headless.sh
+	./scripts/headless_status.sh
 
 headless-stop:
-	./scripts/stop_headless.sh
+	./scripts/headless_stop.sh
 
 doctor:
 	./scripts/doctor.sh

@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
 source "${PROJECT_ROOT}/scripts/lib/headless.sh"
@@ -11,7 +12,7 @@ source "${PROJECT_ROOT}/scripts/lib/headless.sh"
 # 1. Check required tools
 # --------------------------------------------------
 
-command -v avd >/dev/null || {
+command -v adb >/dev/null || {
     echo "ERROR: adb not found" >&2
     exit 1
 }
@@ -25,7 +26,7 @@ command -v emulator >/dev/null || {
 # 2. Check Linux / KVM
 # --------------------------------------------------
 
-"$ROOT/scripts/check_kvm.sh" || exit 1
+"$PROJECT_ROOT/scripts/check_kvm.sh" || exit 1
 
 # --------------------------------------------------
 # 3. Check AVD exists
@@ -42,7 +43,7 @@ emulator -list-avds | grep -Fxq "$AVD_NAME" || {
 
 if adb devices |
 
-    awk '$1 ~ /^emulator~/ {found=1} END {exit !found}'
+    awk '$1 ~ /^emulator-/ {found=1} END {exit !found}'
 
 then
 
@@ -57,9 +58,9 @@ fi
 # 5. Prepare log directory
 # --------------------------------------------------
 
-mkdir -p "$ROOT/artifacts"
+mkdir -p "$PROJECT_ROOT/artifacts"
 
-log="$ROOT/artifacts/headless-emulator.log"
+log="$PROJECT_ROOT/artifacts/headless-emulator.log"
 
 echo "Starting $AVD_NAME (headless)"
 echo "Log: $log"
@@ -69,6 +70,7 @@ echo "Log: $log"
 # --------------------------------------------------
 
 #代表背景啟動 Emulator
+# 代表將 stdout、stderr 寫進 log，並讓 stdin 來自 /dev/null
 nohup emulator \
     -avd "$AVD_NAME" \
     -port 5554 \
@@ -77,9 +79,8 @@ nohup emulator \
     -no-boot-anim \
     -no-snapshot \
     -gpu software \
-    # 代表將 stdout、stderr 寫進 log，並讓 stdin 來自 /dev/null
-    >"$log" 2>&1 </dev/null &
-
+    >"$log" 2>&1 </dev/null & 
+    
 #取得剛剛啟動的背景程序 PID
 pid=$!
 
