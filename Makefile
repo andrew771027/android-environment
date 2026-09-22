@@ -1,9 +1,10 @@
+PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+
 .PHONY: \
 	bootstrap \
 	install-sdk \
 	create-avd \
 	kvm-check \
-	headless-smoke \
 	unit-test \
 	emulator-start \
 	emulator-wait \
@@ -14,7 +15,6 @@
 	validate \
 	devices \
 	shell \
-	test \
 	clean
 
 bootstrap:
@@ -22,9 +22,6 @@ bootstrap:
 
 kvm-check:
 	./scripts/check_kvm.sh
-
-headless-smoke:
-	./scripts/run_headless_smoke.sh
 
 install-sdk:
 	./scripts/install_sdk.sh
@@ -60,10 +57,7 @@ shell:
 	adb shell
 
 unit-test:
-	python -m pytest -q -m "not integration" tests
-
-# Alias kept for convenience.
-test: unit-test
+	"$(PYTHON)" -m pytest -q -m "not integration" tests
 
 # Mock Emulator測試
 # pytest -m "not integration"

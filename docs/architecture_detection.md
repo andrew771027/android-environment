@@ -1,6 +1,6 @@
 # Architecture Detection
 
-Android Environment v0.2 chooses an emulator system-image ABI from the workstation OS and CPU. `scripts/lib/platform.sh` is shared by SDK installation, AVD creation, and validation.
+Android Environment v0.4.0 chooses an emulator system-image ABI from the workstation OS and CPU. `scripts/lib/platform.sh` is shared by SDK installation, AVD creation, and validation.
 
 ## Supported Matrix
 
@@ -27,7 +27,7 @@ The package is assembled from configuration:
 SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};${ANDROID_IMAGE_ARCH}"
 ```
 
-With v0.2 defaults, Apple Silicon resolves to:
+With v0.4.0 defaults, Apple Silicon resolves to:
 
 ```text
 system-images;android-36;google_apis;arm64-v8a
@@ -56,3 +56,5 @@ emulator -accel-check
 ```
 
 Architecture detection does not enable macOS virtualization, Linux KVM, or nested virtualization.
+
+The separate KVM check targets Linux x86_64. This does not restrict the ABI mapping above or prove acceleration is available. See [Linux/KVM status](./linux-kvm.md).

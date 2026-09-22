@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd )"
-PROJECT_ROOT="(cd "${SCRIPT_DIR}/..." && pwd )"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/scripts/lib/common.sh"
 source "${PROJECT_ROOT}/scripts/lib/platform.sh"
@@ -12,7 +12,7 @@ source "${PROJECT_ROOT}/scripts/lib/kvm.sh"
 KVM_DEVICE="/dev/kvm"
 
 echo " ============================================== "
-echo " Android Environment - Linux / LVM " 
+echo " Android Environment - Linux / KVM "
 echo " ============================================== "
 
 # --------------------------------------------------
@@ -29,16 +29,16 @@ if [[ "${HOST_OS}" != "linux" ]]; then
 
     die "KVM check requires Linux;
 
-Current OS: 
+Current OS:
 ${HOST_OS}"
 
 fi
 
-if [[ "${{HOST_ARCH}}" != "x86_64" ]]; then
+if [[ "${HOST_ARCH}" != "x86_64" ]]; then
 
     die "Android Environment v0.4.0 currently support Linux x86_64 only.
 
-Current architecture: 
+Current architecture:
 ${HOST_ARCH}"
 
 fi
@@ -50,7 +50,7 @@ fi
 echo
 log_info "Checking Android Emulator"
 
-if ! command_exists_emulator; then
+if ! command_exists emulator; then
 
     die "Android Emulator command not found.
 
@@ -69,7 +69,7 @@ log_ok "Android Emulator found"
 echo
 log_info "Checking KVM device"
 
-if ! kvm_devices_exists "${KVM_DEIVCE}"; then
+if ! kvm_device_exists "${KVM_DEVICE}"; then
 
     die "KVM device not found:
 
@@ -104,7 +104,7 @@ log_ok "KVM device is readable and writable"
 echo
 log_info "Checking Emulator acceleration"
 
-if !emulator_acceleration_available; then
+if ! emulator_acceleration_available; then
 
     echo
 

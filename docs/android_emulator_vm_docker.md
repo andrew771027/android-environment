@@ -1,5 +1,7 @@
 # Android Emulator, VM, Docker, and Linux Kernel
 
+This conceptual guide accompanies Android Environment v0.4.0. The repository provides local emulator lifecycle scripts; it does not include a working Docker or headless CI runner. See [Linux/KVM implementation status](./linux-kvm.md).
+
 ## Purpose
 
 This document explains the relationship between:

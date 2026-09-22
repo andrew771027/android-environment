@@ -6,6 +6,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 KVM_LIB = PROJECT_ROOT / "scripts" / "lib" / "kvm.sh"
 
+
 def run_bash(
     script: str,
     env: dict[str, str] | None = None,
@@ -19,22 +20,17 @@ def run_bash(
         check=False,
     )
 
-def make_fake_command(
-    directory: Path,
-    name: str,
-    content: str
-) -> Path:
+
+def make_fake_command(directory: Path, name: str, content: str) -> Path:
 
     command = directory / name
 
-    command.write_text(
-        content,
-        encoding="utf-8"
-    )
+    command.write_text(content, encoding="utf-8")
 
     command.chmod(0o775)
 
     return command
+
 
 def test_kvm_device_exists(tmp_path: Path):
 
@@ -55,7 +51,9 @@ fi
     )
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert result.stdout.strip() == "EXISTS"
+
 
 def test_kvm_device_missing(tmp_path: Path):
 
@@ -74,7 +72,9 @@ fi
     )
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert result.stdout.strip() == "MISSING"
+
 
 def test_emulator_acceleration_available(tmp_path: Path):
 
@@ -85,7 +85,7 @@ def test_emulator_acceleration_available(tmp_path: Path):
     make_fake_command(
         fake_bin,
         "emulator",
-        """#!usr/bin/env bash
+        """#!/usr/bin/env bash
 if [[ "$1" == "-accel-check" ]]; then
     echo "KVM is installed and usable."
     exit 0
@@ -96,10 +96,7 @@ exit 1
     )
 
     env = os.environ.copy()
-    env["PATH"] =(
-        f"{fake_bin}:"
-        f"{env['PATH']}"
-    )
+    env["PATH"] = f"{fake_bin}:" f"{env['PATH']}"
 
     result = run_bash(
         f"""
@@ -110,12 +107,14 @@ if emulator_acceleration_available; then
 else
     echo UNAVAILABLE
 fi
-""", 
-    env,
+""",
+        env,
     )
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert result.stdout.strip() == "AVAILABLE"
+
 
 def test_emulator_acceleration_unavailable(tmp_path: Path):
 
@@ -129,7 +128,7 @@ def test_emulator_acceleration_unavailable(tmp_path: Path):
         """#!/usr/bin/env bash
 
 if [[ "$1" == "-accel-check" ]]; then
-    
+
     echo "KVM is not available."
     exit 1
 fi
@@ -140,10 +139,7 @@ exit 1
 
     env = os.environ.copy()
 
-    env["PATH"] = {
-        f"{fake_bin}:"
-        f"{env['PATH']}"
-    }
+    env["PATH"] = f"{fake_bin}:{env['PATH']}"
 
     result = run_bash(
         f"""
@@ -155,8 +151,9 @@ else
     echo UNAVAILABLE
 fi
 """,
-    env,
+        env,
     )
 
     assert result.returncode == 0
+    assert result.stderr == ""
     assert result.stdout.strip() == "UNAVAILABLE"
