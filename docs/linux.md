@@ -1,6 +1,6 @@
 # Android Environment on Linux
 
-This guide prepares a Linux workstation for Android Environment v0.2 and Android Cookbook.
+This guide prepares a Linux workstation for Android Environment v0.4.0 and Android Cookbook.
 
 The examples use Ubuntu/Debian-style package commands. Adjust package installation commands for other distributions.
 
@@ -250,7 +250,7 @@ cookbook_pixel_api_36
 Desktop Linux:
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or:
@@ -319,7 +319,7 @@ KVM permissions
 ADB lifecycle
 ```
 
-Once the normal local emulator works, a later environment version can add a dedicated headless launcher such as:
+For manual headless execution, the emulator command can be run directly:
 
 ```bash
 emulator \
@@ -328,7 +328,7 @@ emulator \
   -no-audio
 ```
 
-This remains optional; the v0.2 launcher starts an interactive emulator by default.
+The v0.4.0 local launcher starts an interactive emulator. No `make headless-smoke` target or runner is provided to automate this workflow. For the Linux x86_64 `make kvm-check` command, see [Linux/KVM status](./linux-kvm.md) for details and manual checks.
 
 ## 16. Useful Checks
 
@@ -350,7 +350,7 @@ Or:
 make doctor
 ```
 
-Run the v0.2 strict provisioning check with:
+Run the v0.4.0 strict provisioning check with:
 
 ```bash
 make validate

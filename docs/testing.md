@@ -1,6 +1,6 @@
 # 測試指南
 
-測試使用 pytest 執行 Python 測試，再透過 subprocess 呼叫 Bash 或 Android SDK 工具。依據 [pytest.ini](../pytest.ini)，`integration` marker 表示測試需要真實 Android SDK 或 emulator。
+Android Environment v0.4.0 的測試使用 pytest 執行 Python 測試，再透過 subprocess 呼叫 Bash 或 Android SDK 工具。依據 [pytest.ini](../pytest.ini)，`integration` marker 表示測試需要真實 Android SDK 或 emulator。
 
 ## 準備 Python 環境
 
@@ -26,12 +26,13 @@ source script.sh
 | --- | --- | --- |
 | Mock 測試 | `python -m pytest -v -m "not integration"` | Python、pytest、Bash 與基本 shell 工具；不需要真實 emulator |
 | 整合測試 | `python -m pytest -v -m integration` | SDK 工具、baseline AVD、已開機的 emulator |
-| 全部測試 | `python -m pytest -v tests` 或 `make test` | 同整合測試；make 使用 PATH 中的 pytest |
+| 非整合測試（Make） | `make unit-test` | 優先使用 `.venv/bin/python`，否則使用 `python3`；選取 10 個測試 |
+| 全部測試 | `python -m pytest -v tests` | 共 12 個測試；需要整合測試的環境 |
 | 單一 timeout 測試 | `python -m pytest -v tests/test_emulator_lib.py::test_wait_for_emulator_boot_timeout` | 同 Mock 測試 |
 
-Marker 只分類測試，不會自動跳過。`make test` 執行全部測試，沒有 emulator 時整合測試會失敗。
+Marker 只分類測試，不會自動跳過。`make unit-test` 透過 `-m "not integration"` 排除整合測試；直接執行全部測試時，沒有 emulator 會造成整合測試失敗。
 
-## Mock 測試：6 個案例
+## Emulator mock 測試：6 個案例
 
 [test_emulator_lib.py](../tests/test_emulator_lib.py) 在 pytest 的 `tmp_path` 建立可執行的假 `adb`，將其目錄放在複製後的 `PATH` 最前面，再用 Bash source 真正的 `scripts/lib/emulator.sh`。測試不會呼叫真實 adb，也不會啟動或停止真實 emulator。
 
@@ -160,6 +161,41 @@ python -m pytest -v -m integration
 
 若尚未安裝系統映像，先依 [README](../readme.md) 完成 SDK 安裝。`make emulator-start` 本身會等待開機；若 emulator 已由其他方式啟動，可先執行 `make emulator-wait`。腳本與測試適合一次使用一台 online emulator。
 
+## Make 使用的 Python
+
+`make unit-test` 優先使用專案的 `.venv/bin/python`，不存在時使用 PATH 中的 `python3`，因此不需先啟用 `.venv`。所選環境仍須安裝 pytest，並符合專案的 Python 版本要求。可用 `make unit-test PYTHON=/path/to/python` 指定直譯器。
+
+## KVM 測試與目前限制
+
+[test_kvm.py](../tests/test_kvm.py) 有 4 個非整合測試，使用暫存檔模擬 KVM device，使用假 `emulator` 模擬 `-accel-check` 的成功與失敗，不需要 Linux 或真實 KVM。
+
+| 案例 | 模擬方式 | 預期輸出 |
+| --- | --- | --- |
+| `test_kvm_device_exists` | 建立暫存檔，再呼叫 `kvm_device_exists` | `EXISTS` |
+| `test_kvm_device_missing` | 傳入不存在的路徑 | `MISSING` |
+| `test_emulator_acceleration_available` | 假 emulator 收到 `-accel-check` 時回傳 0 | `AVAILABLE` |
+| `test_emulator_acceleration_unavailable` | 假 emulator 回傳 1 | `UNAVAILABLE` |
+
+`kvm_device_exists` 將參數賦值給 `device_path` 後用 `-e` 檢查；假 emulator 使用 `#!/usr/bin/env bash`，且 `env["PATH"]` 是字串。四個測試均檢查 Bash 包裝的退出碼、stdout 與空 stderr，避免裝置檢查的函式不存在時被誤判成預期的否定結果。acceleration helper 本身會丟棄 emulator 的 stdout/stderr，因此空 stderr 不代表已驗證真實 emulator 的診斷輸出。
+
+目前沒有測試 `kvm_device_accessible` 或完整 `check_kvm.sh` 流程，也沒有端到端 start/stop/reset、固定 serial、process 清理或 headless smoke 測試。目前檔案樹沒有 `tests/test_ci_emulator.py`；Makefile 未提供 `headless-smoke` target，也沒有對應 runner，因此目前沒有可用的 headless CI 驗證命令。
+
 ## 驗證紀錄
 
-本次對話修正後曾執行 Mock 測試，結果為 `6 passed, 2 deselected`。當時 AVD 清單有 `cookbook_pixel_api_36`，但 `adb devices` 沒有裝置，因此未宣稱整合測試通過。此紀錄反映當時環境；目前結果請重新執行上述命令確認。
+2026-09-22 重新執行，環境為 macOS、Python 3.14.0、pytest 9.1.1，Make 選用 `.venv/bin/python`：
+
+```text
+$ make unit-test
+".venv/bin/python" -m pytest -q -m "not integration" tests
+10 passed, 2 deselected in 4.36s
+```
+
+| 範圍 | 本次結果 |
+| --- | --- |
+| Emulator helper mock tests | 6 個通過 |
+| KVM helper mock tests | 4 個通過 |
+| SDK/emulator 整合測試 | 2 個被 marker 排除，未執行 |
+| `bash -n scripts/check_kvm.sh scripts/lib/kvm.sh` | 通過語法檢查 |
+| 真實 Linux/KVM 與完整 host check | 未執行 |
+
+`deselected` 表示測試未被選取，不代表測試通過或由測試內部 skip。這次結果驗證 mock 情境下的函式行為；Bash 語法檢查也不會執行 KVM 檢查流程。

@@ -1,6 +1,6 @@
 # Environment Validation
 
-Android Environment v0.2 provides a quick diagnostic and a strict validator.
+Android Environment v0.4.0 provides a quick diagnostic and a strict validator.
 
 ## Quick Diagnostic
 
@@ -25,7 +25,7 @@ The validator checks:
 5. The configured AVD.
 6. Connected devices as additional information.
 
-It ends with `PASS=<count>` and `FAIL=<count>`. Any failure produces exit status `1`, making it suitable for automation. A running emulator is not required, but the configured AVD must exist.
+On the normal completion path it ends with `PASS=<count>` and `FAIL=<count>`; a missing `sdkmanager` causes an earlier exit without that summary. Any failure produces exit status `1`, making it suitable for automation. A running emulator is not required, but the configured AVD must exist.
 
 ## Recommended Workflow
 
@@ -34,7 +34,7 @@ make bootstrap
 make install-sdk
 make create-avd
 make validate
-make emulator
+make emulator-start
 ```
 
 After launch, check runtime health separately:
@@ -61,3 +61,7 @@ After boot, expected values are `1` for `sys.boot_completed` and `36` for the SD
 If `sdkmanager` is missing, strict validation stops because it cannot inspect packages. Use `make doctor` first for a partially configured workstation.
 
 Provisioning validation does not guarantee acceleration, Android boot, or physical-device authorization. Check those with `emulator -accel-check`, `adb devices`, and the boot-completed property. See [emulator.md](./emulator.md).
+
+`make kvm-check` is a separate Linux x86_64 host check; it is not part of `make validate` or `make doctor`. See [Linux/KVM status](./linux-kvm.md) for requirements and manual checks.
+
+The recorded `make unit-test` result is **10 passed, 2 deselected** on macOS. These mock tests do not run provisioning validation or verify real KVM acceleration. The two SDK/emulator integration tests were not run. See [test results and coverage](./testing.md).
