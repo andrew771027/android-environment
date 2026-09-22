@@ -1,6 +1,6 @@
 # Android Environment on macOS
 
-This guide prepares a macOS workstation for Android Environment v0.2 and Android Cookbook.
+This guide prepares a macOS workstation for Android Environment v0.4.0 and Android Cookbook.
 
 The preferred setup is command-line first. Android Studio is optional.
 
@@ -251,7 +251,7 @@ cookbook_pixel_api_36
 ## 12. Start the Emulator
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or:
@@ -324,7 +324,7 @@ Or simply:
 make doctor
 ```
 
-Run the v0.2 strict provisioning check with:
+Run the v0.4.0 strict provisioning check with:
 
 ```bash
 make validate
@@ -388,3 +388,7 @@ Do not commit this directory to Git.
 ## 17. Done
 
 Return to [setup.md](./setup.md) and continue with the common setup flow.
+
+## v0.4.0 Test and KVM Scope
+
+`make unit-test` excludes integration tests. The 2026-09-22 macOS run passed all 10 mock tests, including four KVM cases; two integration tests were excluded. These mocks do not verify hardware acceleration. See [testing](./testing.md). The KVM host check targets Linux x86_64 and is not a macOS acceleration check. Local lifecycle commands continue to use the first online emulator.

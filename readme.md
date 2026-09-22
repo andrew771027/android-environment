@@ -1,8 +1,8 @@
-# Android Environment v0.3
+# Android Environment v0.4.0
 
 Reproducible, command-line-first Android workstation environment for Android Cookbook.
 
-Version 0.3 adds emulator lifecycle management: start, wait for Android boot completion, inspect status, stop, and reset user data. It builds on v0.2's host architecture detection, architecture-aware system-image selection, idempotent SDK/AVD setup, and provisioning validation.
+Version 0.4.0 adds Linux/KVM host checks and mock tests while retaining architecture-aware SDK/AVD setup and emulator lifecycle management. The KVM command targets Linux x86_64; the headless smoke runner is absent. See [Linux/KVM status](./docs/linux-kvm.md) for the current limitations.
 
 ## Baseline
 
@@ -59,14 +59,15 @@ The expected SDK level is `36`.
 | `make emulator-status` | Report STOPPED, BOOTING, or READY |
 | `make emulator-stop` | Stop the first online emulator through ADB |
 | `make emulator-reset` | Wipe the configured AVD user data, launch it, and wait for boot |
-| `make test` | Run all pytest tests, including integration tests |
+| `make unit-test` | Run non-integration tests using `.venv/bin/python`, falling back to `python3` |
+| `make kvm-check` | Check Linux x86_64, KVM device access, and emulator acceleration |
 | `make doctor` | Show tool, AVD, and connected-device availability |
 | `make validate` | Strictly validate host, tools, packages, and AVD |
 | `make devices` | List devices visible to ADB |
 | `make shell` | Open an ADB shell |
 | `make clean` | Delete only the configured project AVD |
 
-`doctor` is informational. `validate` reports pass/fail counts and exits non-zero when provisioning is incomplete; it does not require a running emulator or verify Android boot completion. Use `make emulator-wait` for runtime readiness. The current launch command is `make emulator-start`; the `make emulator` target has no launch recipe.
+`doctor` is informational. `validate` reports pass/fail counts and exits non-zero when provisioning is incomplete; it does not require a running emulator or verify Android boot completion. Use `make emulator-wait` for runtime readiness. The current launch command is `make emulator-start`; `make emulator` is not a defined target.
 
 ## Emulator Lifecycle
 
@@ -98,11 +99,13 @@ source .venv/bin/activate
 python -m pip install 'pytest>=9.1.1,<10.0.0'
 ```
 
+`make unit-test` uses `.venv/bin/python` when present, otherwise `python3`. Override it with `make unit-test PYTHON=/path/to/python`; the selected interpreter must have pytest installed.
+
 For an existing `.venv`, activate it with `source script.sh`. Run mock tests independently, then prepare the emulator for integration tests:
 
 ```bash
 source script.sh
-python -m pytest -v -m "not integration"
+make unit-test
 make emulator-start
 python -m pytest -v -m integration
 ```
@@ -110,11 +113,12 @@ python -m pytest -v -m integration
 | Suite | Cases | Coverage |
 | --- | --- | --- |
 | [Mock tests](./tests/test_emulator_lib.py) | 6 | Serial discovery, missing emulator, boot-complete / incomplete responses, and wait timeout using a fake `adb` with the real Bash helpers |
+| [KVM mock tests](./tests/test_kvm.py) | 4 | Device existence and acceleration success/failure using temporary files and a fake emulator |
 | [Integration tests](./tests/test_emulator_integration.py) | 2 | Baseline AVD appears in `emulator -list-avds`; first online emulator reports `sys.boot_completed=1` |
 
 Mock tests require no real SDK or emulator. Integration tests require SDK tools on `PATH`, the baseline AVD, and an already booted emulator; they do not provision or launch it. The AVD existence test hardcodes `cookbook_pixel_api_36`, while the readiness test does not verify the selected emulator's AVD name.
 
-`make test` runs all 8 tests. The `integration` marker labels tests; it does not automatically skip them when an emulator is unavailable. Current coverage does not include end-to-end start/stop/reset behavior. See [testing](./docs/testing.md) for setup, coverage limits, and failure diagnosis.
+`make unit-test` selects 10 non-integration tests; `python -m pytest -v tests` selects all 12 tests. The 2026-09-22 macOS run with Python 3.14.0 and pytest 9.1.1 reports **10 passed, 2 deselected**. The two integration tests were excluded by the marker filter and were not run; real Linux/KVM acceleration was not verified. The `integration` marker labels tests; it does not automatically skip them when an emulator is unavailable. Current coverage does not include end-to-end start/stop/reset behavior. See [testing](./docs/testing.md) for setup, coverage limits, and failure diagnosis.
 
 ## Configuration
 
@@ -142,6 +146,7 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 - [Validation and doctor](./docs/validation.md)
 - [macOS setup](./docs/macos.md)
 - [Linux setup](./docs/linux.md)
+- [Linux/KVM checks and current limitations](./docs/linux-kvm.md)
 - [Emulator guide](./docs/emulator.md)
 - [Emulator lifecycle implementation](./docs/emulator-lifecycle.md)
 - [Testing and troubleshooting](./docs/testing.md)
@@ -149,14 +154,12 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 - [Android Emulator, VM, Docker, and Linux kernel](./docs/android_emulator_vm_docker.md)
 - [Roadmap](./roadmap.md)
 
-Some setup documents still carry v0.2 labels and `make emulator` examples. Use the commands above and the lifecycle implementation guide for v0.3 behavior.
+## v0.4.0 Status
 
-## v0.3 Highlights
+- Existing local start, wait, status, stop, and reset commands remain available.
+- Linux/KVM helpers, a check command, and four passing mock test cases have been added. Real Linux/KVM host validation remains to be exercised on a suitable host.
+- `make unit-test` runs non-integration tests only.
+- `EMULATOR_PORT`, `EMULATOR_SERIAL`, `EMULATOR_STOP_TIMEOUT_SECONDS`, and `EMULATOR_POLL_INTERVAL_SECONDS` are declared but unused by the current scripts. They do not isolate an emulator or change local stop behavior.
+- There is no `make headless-smoke` target or `scripts/run_headless_smoke.sh` runner. There is no `tests/test_ci_emulator.py` in the current source tree, and no automated headless workflow is available.
 
-- Shared emulator discovery and boot-readiness helpers in `scripts/lib/emulator.sh`.
-- Start or reuse an online emulator and wait for Android boot completion.
-- Dedicated wait, status, stop, and user-data reset commands.
-- Configurable boot polling and start flags, with emulator output in `emulator.log`.
-- Six mock tests and two integration tests, plus lifecycle and testing documentation.
-
-Headless/CI automation remains planned for v0.4 and physical-device workflows for v0.5 in the roadmap. The current launcher starts an interactive emulator.
+The roadmap describes intended milestones; the commands and limitations above reflect the current source. The v0.4.0 label here identifies the documentation release; `pyproject.toml` still declares package version `0.1.0`.
