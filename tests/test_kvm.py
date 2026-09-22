@@ -4,7 +4,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-KVM_LIB = PROJECT_ROOT / "scripts" / "lib" / "kvm.sh"
+LIB = PROJECT_ROOT / "scripts" / "lib" / "kvm.sh"
 
 
 def run_bash(
@@ -40,7 +40,7 @@ def test_kvm_device_exists(tmp_path: Path):
 
     result = run_bash(
         f"""
-source "{KVM_LIB}"
+source "{LIB}"
 
 if kvm_device_exists "{fake_kvm}"; then
     echo EXISTS
@@ -61,7 +61,7 @@ def test_kvm_device_missing(tmp_path: Path):
 
     result = run_bash(
         f"""
-source "{KVM_LIB}"
+source "{LIB}"
 
 if kvm_device_exists "{fake_kvm}"; then
     echo EXISTS
@@ -100,7 +100,7 @@ exit 1
 
     result = run_bash(
         f"""
-    source "{KVM_LIB}"
+    source "{LIB}"
 
 if emulator_acceleration_available; then
     echo AVAILABLE
@@ -143,7 +143,7 @@ exit 1
 
     result = run_bash(
         f"""
-source "{KVM_LIB}"
+source "{LIB}"
 
 if emulator_acceleration_available; then
     echo AVAILABLE
