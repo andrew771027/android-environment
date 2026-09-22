@@ -1,38 +1,26 @@
 # Linux and KVM
 
-Android Environment v0.4.0 introduces Linux host validation and KVM acceleration checks.
+Android Environment v0.4.0 adds Linux/KVM host and acceleration checks. Local emulator lifecycle commands remain available.
 
 ## Goal
 
 Before running an Android Emulator on Linux, verify that the workstation can provide hardware-assisted virtualization.
 
-The validation flow is:
+The script checks in this order:
 
-```text
-Linux
-  |
-  v
-CPU Architecture
-  |
-  v
-/dev/kvm
-  |
-  v
-KVM Permission
-  |
-  v
-Android Emulator
-  |
-  v
-emulator -accel-check
-  |
-  v
-READY
+```mermaid
+flowchart TD
+    A["Linux"] --> B["x86_64"]
+    B --> C["emulator command"]
+    C --> D["/dev/kvm exists"]
+    D --> E["device readable/writable"]
+    E --> F["emulator -accel-check"]
+    F --> G["PASS"]
 ```
 
 ## Requirements
 
-Android Environment v0.4.0 currently targets:
+The KVM check is intended for the following host setup; this does not replace the broader macOS/Linux ABI mapping used by SDK provisioning:
 
 * Linux
 * x86_64
@@ -72,7 +60,7 @@ A successful check should indicate that KVM is installed and usable.
 
 ## Project Validation
 
-Run:
+The Makefile exposes:
 
 ```bash
 make kvm-check
@@ -107,7 +95,7 @@ Android Emulator provides:
 emulator -accel-check
 ```
 
-Android Environment uses this command as the final validation that the Emulator can use VM acceleration.
+The `emulator_acceleration_available` helper returns the exit status of this command, with output suppressed. The full project check runs it after checking the host, emulator command, and device permissions.
 
 ## Troubleshooting
 
@@ -142,12 +130,10 @@ emulator -accel-check
 
 directly and inspect its diagnostic output.
 
-## Scope
+## Scope and test status
 
-v0.4.0 does not start an Android Emulator.
+The KVM check is intended to inspect host readiness without starting an emulator. Existing `make emulator-start`, wait, status, stop, and reset commands still operate independently and do not call the KVM check. `make validate` also does not check KVM.
 
-It only answers:
+There is no `make headless-smoke` target or `scripts/run_headless_smoke.sh` runner. The reserved CI settings in `config/android.env` are unused; automated headless execution and cleanup are not implemented in this tree.
 
-> Is this Linux workstation ready to use KVM-backed Android Emulator acceleration?
-
-Headless execution and automated smoke testing are intentionally deferred to later versions.
+The 2026-09-22 macOS `make unit-test` run reports **10 passed, 2 deselected**: six emulator helper tests and four KVM mock tests passed. Bash syntax checks also passed. The two integration tests were excluded; neither real Linux/KVM acceleration nor the complete Linux host check was exercised. Device permission checks are not covered by the current mock suite. See [testing](./testing.md) for results and coverage limits, and [configuration](./configuration.md) for active versus unused settings.

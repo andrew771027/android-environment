@@ -1,10 +1,10 @@
 # Configuration
 
-Android Environment v0.2 separates project defaults from the static SDK package list.
+Android Environment v0.4.0 separates project defaults from the static SDK package list.
 
 ## `config/android.env`
 
-| Variable | v0.2 default | Purpose |
+| Variable | v0.4.0 default | Purpose |
 | --- | --- | --- |
 | `ANDROID_API_LEVEL` | `36` | Pinned Android API level |
 | `ANDROID_PLATFORM` | `platforms;android-36` | Platform derived from the API level |
@@ -20,11 +20,22 @@ export ANDROID_HOME="/path/to/Android/Sdk"
 make validate
 ```
 
-Ensure its SDK tools are also on `PATH`.
+Ensure its SDK tools are also on `PATH`. All other settings are assigned unconditionally when sourced; edit `config/android.env` to change them.
+
+## Local emulator settings
+
+| Variable | Default | Behavior |
+| --- | --- | --- |
+| `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot wait budget in accumulated sleep seconds |
+| `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Local boot polling interval |
+| `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Add `-no-snapshot-load` on start |
+| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Add `-no-boot-anim` on start |
+
+Reset always uses both flags plus `-wipe-data`. Stop has a hardcoded 30-second polling budget; reset waits for disconnection without a timeout. See [lifecycle behavior](./emulator-lifecycle.md).
 
 ## `config/packages.txt`
 
-This file contains one `sdkmanager` package per line. Blank lines and `#` comments are ignored. The v0.2 list is:
+This file contains one `sdkmanager` package per line. Blank lines and `#` comments are ignored. The v0.4.0 list is:
 
 ```text
 platform-tools
@@ -58,13 +69,15 @@ Changing `AVD_NAME` changes which AVD `make emulator-start` starts and `make cle
 Keep portable defaults in `android.env`, static packages in `packages.txt`, and machine-specific SDK paths in the shell environment. Do not commit SDK contents or AVD data.
 
 
-## Linux headless CI settings
+## Reserved CI settings (currently unused)
 
-| Variable | Default | Purpose |
+| Variable | Declared value | Current behavior |
 | --- | --- | --- |
-| `EMULATOR_PORT` | `5554` | Reserved console port |
-| `EMULATOR_SERIAL` | `emulator-5554` | Explicit ADB target |
-| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Grace period before TERM, then KILL |
-| `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | CI boot polling interval |
+| `EMULATOR_PORT` | `5554` | Not passed to the emulator |
+| `EMULATOR_SERIAL` | `emulator-5554` | Not used for ADB selection |
+| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Not read by stop/reset |
+| `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | Not read by the boot helpers |
 
-CI shares `EMULATOR_BOOT_TIMEOUT_SECONDS=180` with the local workflow. Local polling uses the separate `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` setting. Edit the configuration file to change timeout defaults; CI requires the fixed port/serial pair above.
+These declarations do not implement an isolated CI workflow. Local helpers still select the first online emulator. No headless smoke target or runner is provided; there is no TERM/KILL fallback or fixed-port enforcement in the existing lifecycle scripts.
+
+The integration test hardcodes `cookbook_pixel_api_36`; changing the configured AVD name also requires adjusting that test expectation.

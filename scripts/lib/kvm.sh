@@ -2,9 +2,9 @@
 
 set -u
 
-kvm_devices_exists(){
+kvm_device_exists(){
 
-    local device_path "$1"
+    local device_path="$1"
 
     [[ -e "${device_path}" ]]
 
@@ -20,5 +20,5 @@ kvm_device_accessible(){
 emulator_acceleration_available(){
 
     emulator -accel-check >/dev/null 2>&1
-    
+
 }

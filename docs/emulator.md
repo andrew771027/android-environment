@@ -1,6 +1,6 @@
 # Android Emulator Guide
 
-This document explains the Android Virtual Device (AVD) lifecycle used by Android Environment v0.2.
+This document explains the Android Virtual Device (AVD) lifecycle used by Android Environment v0.4.0.
 
 The goal is not only to launch an emulator, but to understand the relationship between:
 
@@ -55,7 +55,7 @@ emulator = execution engine
 AVD      = virtual device configuration
 ```
 
-## 2. v0.2 Baseline
+## 2. v0.4.0 Baseline
 
 ```text
 AVD name:    cookbook_pixel_api_36
@@ -192,7 +192,7 @@ emulator \
   -no-audio
 ```
 
-Headless mode is optional in v0.2. First make the normal interactive emulator reliable.
+This is a manual headless command. The v0.4.0 lifecycle launcher does not add headless flags, and no `make headless-smoke` target or runner is provided. See [Linux/KVM status](./linux-kvm.md).
 
 ## 10. Check Hardware Acceleration
 
@@ -303,7 +303,7 @@ done
 echo "Android boot completed"
 ```
 
-This runtime boot check complements the v0.2 provisioning validator, which does not require a running emulator.
+This runtime boot check complements the v0.4.0 provisioning validator, which does not require a running emulator.
 
 ## 14. Verify Device Information
 
@@ -480,7 +480,7 @@ Try updating the emulator package first:
 sdkmanager --update
 ```
 
-If debugging a graphics-specific problem, Android Emulator also exposes command-line GPU options. Keep machine-specific overrides out of the default v0.2 configuration unless required.
+If debugging a graphics-specific problem, Android Emulator also exposes command-line GPU options. Keep machine-specific overrides out of the default v0.4.0 configuration unless required.
 
 ## 20. Implemented Lifecycle Commands
 

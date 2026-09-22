@@ -1,6 +1,6 @@
 # Android Environment Setup
 
-This document is the main setup guide for **Android Environment v0.2**, used by **Android Cookbook**.
+This document is the main setup guide for **Android Environment v0.4.0**, used by **Android Cookbook**.
 
 The goal is to prepare a reproducible command-line Android workstation with:
 
@@ -85,7 +85,7 @@ android-environment/
 
 ## 3. Baseline
 
-Android Environment v0.2 uses the following project baseline:
+Android Environment v0.4.0 uses the following project baseline:
 
 ```text
 Android:       Android 16
@@ -229,7 +229,7 @@ See [emulator.md](./emulator.md) for the complete emulator lifecycle.
 ## 10. Start the Emulator
 
 ```bash
-make emulator
+make emulator-start
 ```
 
 Or directly:
@@ -238,7 +238,7 @@ Or directly:
 emulator -avd cookbook_pixel_api_36
 ```
 
-Wait until Android finishes booting.
+`make emulator-start` waits for `sys.boot_completed=1`; a direct emulator launch does not perform the project readiness check. Use `make emulator-wait` when launching manually.
 
 ## 11. Verify ADB
 
@@ -335,7 +335,7 @@ Android Cookbook
 
 ## 14. Physical Pixel Devices
 
-A physical Pixel is optional for v0.2.
+A physical Pixel is optional for v0.4.0.
 
 The emulator is sufficient for early Cookbook topics such as:
 
@@ -363,7 +363,7 @@ Use a physical device later for areas where hardware behavior matters, for examp
 
 ## 15. Definition of Done
 
-Android Environment v0.2 is complete when all of the following work:
+Android Environment v0.4.0 is complete when all of the following work:
 
 - [ ] Java is available.
 - [ ] `sdkmanager` is available.
@@ -387,3 +387,7 @@ Continue with:
 2. [Linux Setup](./linux.md)
 3. [Emulator Guide](./emulator.md)
 4. Android Cookbook v0.1 Recipe 001 — Device Discovery
+
+## v0.4.0 Verification Scope
+
+Use `make unit-test` for non-integration tests and `python -m pytest -v -m integration tests` after starting the emulator. The latest recorded macOS run passed all 10 non-integration tests; the two integration tests and real Linux/KVM checks remain unverified. The KVM mock suite uses fake devices and commands; see [testing](./testing.md). `make kvm-check` targets Linux x86_64; no headless smoke target or runner is provided; see [Linux/KVM status](./linux-kvm.md).

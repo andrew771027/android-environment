@@ -1,6 +1,6 @@
 # Emulator 生命週期
 
-本文依據目前的 [生命週期函式庫](../scripts/lib/emulator.sh)、[scripts](../scripts/) 與 [測試](../tests/) 說明實際行為。基本概念與手動 ADB 操作請參考 [Emulator guide](./emulator.md)。
+本文對應 Android Environment v0.4.0，依據目前的 [生命週期函式庫](../scripts/lib/emulator.sh)、[scripts](../scripts/) 與 [測試](../tests/) 說明實際行為。基本概念與手動 ADB 操作請參考 [Emulator guide](./emulator.md)。
 
 ## 狀態判定
 
@@ -63,6 +63,8 @@
 ## 目前的裝置選取限制
 
 腳本每次都重新選取第一台 online emulator，沒有驗證該 serial 對應 `AVD_NAME`。因此 start 可能沿用其他 AVD，status 印出的 AVD 名稱也只是設定值。stop/reset 可能停止第一台 online emulator，即使它不是專案的 AVD。
+
+`config/android.env` 雖宣告 `EMULATOR_PORT` 與 `EMULATOR_SERIAL`，目前腳本沒有使用它們；`EMULATOR_STOP_TIMEOUT_SECONDS` 與 `EMULATOR_POLL_INTERVAL_SECONDS` 也沒有接入生命週期流程。
 
 此流程適合一次使用一台 emulator。offline 或尚未出現在 ADB 清單的 process 不會被辨識為已連線，重複 start 可能再次嘗試啟動。多裝置精準選取與 process 層級偵測目前尚未實作。
 
