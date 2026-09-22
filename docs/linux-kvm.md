@@ -1,33 +1,153 @@
-# Linux / KVM prerequisites (v0.4)
+# Linux and KVM
 
-## Learning objective
+Android Environment v0.4.0 introduces Linux host validation and KVM acceleration checks.
 
-KVM is Linux kernel virtualization acceleration; headless mode only hides the emulator GUI. Both are needed for this exercise's accelerated, displayless CI.
+## Goal
 
-## Host
+Before running an Android Emulator on Linux, verify that the workstation can provide hardware-assisted virtualization.
 
-Supported exercise baseline: Ubuntu 24.04, x86_64. Linux ARM and Docker-in-Docker are out of scope. A Linux VM needs nested virtualization and `/dev/kvm` exposed by its hypervisor.
+The validation flow is:
+
+```text
+Linux
+  |
+  v
+CPU Architecture
+  |
+  v
+/dev/kvm
+  |
+  v
+KVM Permission
+  |
+  v
+Android Emulator
+  |
+  v
+emulator -accel-check
+  |
+  v
+READY
+```
+
+## Requirements
+
+Android Environment v0.4.0 currently targets:
+
+* Linux
+* x86_64
+* Android Emulator
+* KVM
+* x86_64 Android system images
+
+## Manual Validation
+
+Check the host:
 
 ```bash
 uname -s
 uname -m
+```
+
+Expected:
+
+```text
+Linux
+x86_64
+```
+
+Check the KVM device:
+
+```bash
 ls -l /dev/kvm
 ```
 
-On Ubuntu, if needed:
+Check Android Emulator acceleration:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y qemu-kvm cpu-checker unzip curl libgl1 libpulse0
-kvm-ok
+emulator -accel-check
 ```
 
-An available `/dev/kvm` does not imply current-user permission. On a workstation, ask the administrator to configure the kvm group, then re-login. On an authorized CI runner only, the workflow configures a udev rule for the ephemeral runner. Do not blindly chmod shared workstation devices world-writable.
+A successful check should indicate that KVM is installed and usable.
+
+## Project Validation
+
+Run:
 
 ```bash
 make kvm-check
 ```
 
-`check_kvm.sh` verifies host OS, architecture, device existence/access, and `emulator -accel-check`. It fails rather than silently switching to a slow software emulator.
+The script validates:
 
-Official reference: https://developer.android.com/studio/run/emulator-acceleration
+1. The host is Linux.
+2. The host architecture is x86_64.
+3. Android Emulator is installed.
+4. `/dev/kvm` exists.
+5. The current user can read and write `/dev/kvm`.
+6. Android Emulator reports that acceleration is available.
+
+## KVM Device
+
+Linux exposes KVM through:
+
+```text
+/dev/kvm
+```
+
+The existence of this device indicates that the KVM interface is available to userspace.
+
+Existence alone is not sufficient. The current user also needs permission to access the device.
+
+## Emulator Acceleration
+
+Android Emulator provides:
+
+```bash
+emulator -accel-check
+```
+
+Android Environment uses this command as the final validation that the Emulator can use VM acceleration.
+
+## Troubleshooting
+
+### `/dev/kvm` does not exist
+
+Check whether CPU virtualization support is visible:
+
+```bash
+egrep -c '(vmx|svm)' /proc/cpuinfo
+```
+
+A value greater than zero indicates that virtualization extensions are visible to Linux.
+
+### Permission denied
+
+Inspect:
+
+```bash
+ls -l /dev/kvm
+groups
+```
+
+The Linux account must have appropriate permission to access the KVM device.
+
+### Emulator acceleration fails
+
+Run:
+
+```bash
+emulator -accel-check
+```
+
+directly and inspect its diagnostic output.
+
+## Scope
+
+v0.4.0 does not start an Android Emulator.
+
+It only answers:
+
+> Is this Linux workstation ready to use KVM-backed Android Emulator acceleration?
+
+Headless execution and automated smoke testing are intentionally deferred to later versions.

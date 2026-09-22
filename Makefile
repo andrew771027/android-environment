@@ -1,6 +1,5 @@
 .PHONY: \
 	bootstrap \
-	linux-tools \
 	install-sdk \
 	create-avd \
 	kvm-check \
@@ -23,9 +22,6 @@ bootstrap:
 
 kvm-check:
 	./scripts/check_kvm.sh
-
-linux-tools:
-	./scripts/install_cmdline_tools_linux.sh
 
 headless-smoke:
 	./scripts/run_headless_smoke.sh
