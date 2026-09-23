@@ -1,393 +1,145 @@
-# Android Environment Setup
+# Set up Android Environment
 
-This document is the main setup guide for **Android Environment v0.4.0**, used by **Android Cookbook**.
+This guide covers Android Environment v0.4.1. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
-The goal is to prepare a reproducible command-line Android workstation with:
+## SDK target
 
-- Java
-- Android SDK Command-Line Tools
-- `sdkmanager`
-- `avdmanager`
-- Android SDK Platform Tools
-- `adb`
-- `fastboot`
-- Android Emulator
-- One Android Virtual Device (AVD)
+The defaults come from [android.env](../config/android.env), [packages.txt](../config/packages.txt), and [platform.sh](../scripts/lib/platform.sh).
 
-Android Studio is optional. Android's command-line tools can be installed independently and `sdkmanager` can then install the SDK packages required by this repository.
+| Component | Target |
+| --- | --- |
+| Android release | Android 16 / API 36 |
+| SDK Platform | `platforms;android-36` |
+| macOS Apple Silicon image | `system-images;android-36;google_apis;arm64-v8a` |
+| macOS Intel / Linux x86_64 image | `system-images;android-36;google_apis;x86_64` |
+| Linux ARM64 image mapping | `system-images;android-36;google_apis;arm64-v8a` |
+| Other SDK packages | `platform-tools`, `emulator` |
+| AVD name / hardware profile | `cookbook_pixel_api_36` / `pixel_7` |
+| Command-Line Tools download | 22.0 / build 15859902 |
 
-## 1. Architecture
+Linux ARM64 has a package mapping in the scripts; this is not a verified emulator host. The KVM check and headless start require Linux x86_64.
+
+The SDK target describes the installed platform and emulator image. This repository does not configure an application's `targetSdk` or `compileSdk`, and does not install Build Tools or NDK by default.
+
+### Version limits
+
+The download instructions use a fixed Command-Line Tools archive. The scripts do not enforce its version. Platform Tools, Emulator, SDK Platform, and system-image revisions are not locked, so new installations can resolve to different revisions under the same package IDs.
+
+Use `sdkmanager --list_installed` to record installed revisions. Use `cat "$ANDROID_HOME/cmdline-tools/latest/source.properties"` to inspect the Command-Line Tools version.
+
+### SDK management tools
+
+As checked on 2026-09-23, Google marks [`sdkmanager` as deprecated](https://developer.android.com/tools/sdkmanager) and recommends Android CLI's `android sdk` command. This refers to the management tool, not the Android SDK as a whole.
+
+This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.1's scope.
+
+## 1. Install host prerequisites
+
+Follow [macOS setup](./macos.md) or [Linux setup](./linux.md). These guides include the Google download URL and a one-line download command. Android Studio is optional.
+
+Set the SDK location and tools path in your shell:
+
+```bash
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+For persistent settings, add these lines to `~/.zshrc` on macOS or `~/.bashrc` when using Bash on Linux. All tools on `PATH` should belong to the same SDK installation.
+
+The extracted Command-Line Tools must have this layout:
 
 ```text
-Host workstation
-macOS / Linux
-│
-├── Java
-│
-└── Android SDK
-    │
-    ├── cmdline-tools
-    │   ├── sdkmanager
-    │   └── avdmanager
-    │
-    ├── platform-tools
-    │   ├── adb
-    │   └── fastboot
-    │
-    ├── emulator
-    │
-    ├── platforms
-    │   └── android-36
-    │
-    └── system-images
-        └── Android 16 / API 36
-             │
-             ▼
-      cookbook_pixel_api_36
-             │
-             ▼
-            adb
-             │
-             ▼
-      Android Cookbook
+$ANDROID_HOME/cmdline-tools/latest/
+├── bin/
+│   ├── sdkmanager
+│   └── avdmanager
+├── lib/
+├── NOTICE.txt
+└── source.properties
 ```
 
-## 2. Repository Layout
-
-```text
-android-environment/
-├── config/
-│   ├── android.env
-│   └── packages.txt
-├── docs/
-│   ├── setup.md
-│   ├── configuration.md
-│   ├── architecture_detection.md
-│   ├── validation.md
-│   ├── macos.md
-│   ├── linux.md
-│   └── emulator.md
-├── scripts/
-│   ├── bootstrap.sh
-│   ├── install_sdk.sh
-│   ├── create_avd.sh
-│   ├── start_emulator.sh
-│   ├── doctor.sh
-│   ├── validate_environment.sh
-│   ├── lib/
-│   │   ├── common.sh
-│   │   └── platform.sh
-│   └── cleanup.sh
-├── .gitignore
-├── Makefile
-└── readme.md
-```
-
-## 3. Baseline
-
-Android Environment v0.4.0 uses the following project baseline:
-
-```text
-Android:       Android 16
-API level:     36
-AVD name:      cookbook_pixel_api_36
-Device type:   Pixel-family AVD
-Android Studio: optional
-Physical Pixel: optional
-Host detection: macOS/Linux, ARM64/x86_64
-```
-
-These values are project defaults rather than requirements of Android itself.
-
-## 4. Host-specific Setup
-
-Follow the host guide first:
-
-- macOS: [macos.md](./macos.md)
-- Linux: [linux.md](./linux.md)
-
-After completing the host-specific setup, return here.
-
-## 5. Configure ANDROID_HOME
-
-The recommended repository default is:
+Check the prerequisites:
 
 ```bash
-export ANDROID_HOME="$HOME/Android/Sdk"
-```
-
-Add the Android tools to `PATH`:
-
-```bash
-export PATH="$ANDROID_HOME/platform-tools:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-```
-
-Verify:
-
-```bash
-echo "$ANDROID_HOME"
-command -v sdkmanager
-command -v avdmanager
-command -v adb
-command -v fastboot
-command -v emulator
-```
-
-Expected SDK layout:
-
-```text
-$ANDROID_HOME/
-├── cmdline-tools/
-│   └── latest/
-├── emulator/
-├── platform-tools/
-├── platforms/
-└── system-images/
-```
-
-## 6. Bootstrap the Host
-
-From the repository root:
-
-```bash
-chmod +x scripts/*.sh
-./scripts/bootstrap.sh
-```
-
-Or, if the Makefile is available:
-
-```bash
+java -version
+sdkmanager --version
 make bootstrap
 ```
 
-The bootstrap step checks Java and `unzip`, resolves `ANDROID_HOME`, and creates the SDK directory when needed.
+Bootstrap checks Java and unzip and creates the SDK directory. It does not download or install tools.
 
-## 7. Install Android SDK Packages
-
-After Android Command-Line Tools are installed:
+## 2. Install SDK packages
 
 ```bash
 make install-sdk
 ```
 
-Equivalent SDK packages typically include:
+The installer reads `config/packages.txt`, adds the configured platform and host-specific system image, and skips package IDs already installed. It does not update installed packages. Review and accept SDK licenses when prompted. To review outstanding licenses separately:
 
 ```bash
-sdkmanager \
-  "platform-tools" \
-  "emulator" \
-  "platforms;android-36"
+sdkmanager --licenses
 ```
 
-The repository's `install_sdk.sh` selects the Android 16 system image for the detected host OS and CPU architecture.
-
-View installed packages:
+Check the result:
 
 ```bash
 sdkmanager --list_installed
-```
-
-Accept Android SDK licenses when required:
-
-```bash
-yes | sdkmanager --licenses
-```
-
-## 8. Verify Command-Line Tools
-
-```bash
-sdkmanager --version
 adb version
-fastboot --version
 emulator -version
 ```
 
-At this point the workstation has Android tooling, but it does not yet necessarily have a running Android device.
-
-## 9. Create an Android Virtual Device
+## 3. Create the AVD
 
 ```bash
 make create-avd
-```
-
-Verify:
-
-```bash
 emulator -list-avds
-```
-
-Expected:
-
-```text
-cookbook_pixel_api_36
-```
-
-See [emulator.md](./emulator.md) for the complete emulator lifecycle.
-
-## 10. Start the Emulator
-
-```bash
-make emulator-start
-```
-
-Or directly:
-
-```bash
-emulator -avd cookbook_pixel_api_36
-```
-
-`make emulator-start` waits for `sys.boot_completed=1`; a direct emulator launch does not perform the project readiness check. Use `make emulator-wait` when launching manually.
-
-## 11. Verify ADB
-
-Open another terminal:
-
-```bash
-adb devices
-```
-
-Expected:
-
-```text
-List of devices attached
-emulator-5554    device
-```
-
-The serial may differ.
-
-Test the connection:
-
-```bash
-adb shell getprop ro.product.model
-adb shell getprop ro.build.version.release
-adb shell getprop ro.build.version.sdk
-```
-
-For the repository baseline, the SDK property should report API 36.
-
-## 12. Run Environment Doctor
-
-```bash
-make doctor
-```
-
-Example result:
-
-```text
-java           OK
-sdkmanager     OK
-avdmanager     OK
-adb            OK
-fastboot       OK
-emulator       OK
-
-ANDROID_HOME=/Users/example/Android/Sdk
-
-AVDs:
-cookbook_pixel_api_36
-
-Devices:
-List of devices attached
-emulator-5554 device
-```
-
-For strict provisioning checks:
-
-```bash
 make validate
 ```
 
-Unlike `doctor`, validation checks the host mapping, SDK directory, installed packages, and configured AVD, and exits non-zero on failure. See [validation.md](./validation.md).
+The list should include `cookbook_pixel_api_36`. Validation should finish with `FAIL=0`. Creation reuses an existing AVD with that name; it does not compare or repair its configuration. See [validation](./validation.md) for the exact checks.
 
-## 13. Start Android Cookbook v0.1
+## 4. Start Android
 
-Once this succeeds:
+For a desktop session on macOS or Linux:
+
+```bash
+make emulator-start
+make emulator-status
+```
+
+For Linux x86_64 without a display:
+
+```bash
+make headless-start
+make headless-status
+```
+
+Headless start requires KVM access and no existing emulator in the ADB list. It uses port 5554. See [headless operation](./headless.md) before using it on a shared host.
+
+Both start commands wait for Android boot completion. If boot times out, inspect `emulator.log` for desktop mode or `artifacts/headless-emulator.log` for headless mode. A timeout does not automatically stop the background process.
+
+## 5. Verify and stop the device
 
 ```bash
 adb devices
+adb shell getprop sys.boot_completed
+adb shell getprop ro.build.version.sdk
 ```
 
-Android Cookbook can assume that an Android target exists.
+Expected property values are `1` and `36`. When multiple devices are connected, pass `-s SERIAL` to ADB.
 
-Recommended first commands:
+Use the stop command for the workflow you started:
 
 ```bash
-adb devices
-adb shell
-adb shell getprop
-adb shell pm list packages
-adb shell ps -A
-adb logcat
-adb shell dumpsys
+make emulator-stop
 ```
 
-The responsibility boundary is:
+or:
 
-```text
-Android Environment
-    └── How do I obtain a usable Android workstation/device?
-
-Android Cookbook
-    └── What can I inspect, control, test, and learn on Android?
+```bash
+make headless-stop
 ```
 
-## 14. Physical Pixel Devices
+Headless stop sends a shutdown request after checking readiness and identity; it does not wait for disconnection. Desktop stop waits up to 30 polling seconds.
 
-A physical Pixel is optional for v0.4.0.
-
-The emulator is sufficient for early Cookbook topics such as:
-
-- `adb`
-- shell navigation
-- `getprop`
-- package manager (`pm`)
-- activity manager (`am`)
-- `logcat`
-- `dumpsys`
-- filesystem inspection
-- processes
-- settings
-
-Use a physical device later for areas where hardware behavior matters, for example:
-
-- bootloader
-- real `fastboot` workflows
-- flashing
-- USB behavior
-- battery and power
-- sensors
-- vendor-specific behavior
-- hardware validation
-
-## 15. Definition of Done
-
-Android Environment v0.4.0 is complete when all of the following work:
-
-- [ ] Java is available.
-- [ ] `sdkmanager` is available.
-- [ ] `avdmanager` is available.
-- [ ] `adb` is available.
-- [ ] `fastboot` is available.
-- [ ] `emulator` is available.
-- [ ] Android 16 / API 36 packages are installed.
-- [ ] `cookbook_pixel_api_36` can be created.
-- [ ] The emulator can boot.
-- [ ] `adb devices` reports the emulator as `device`.
-- [ ] `adb shell` works.
-- [ ] `make doctor` reports the expected tools and devices.
-- [ ] `make validate` reports `FAIL=0`.
-
-## 16. Next
-
-Continue with:
-
-1. [macOS Setup](./macos.md)
-2. [Linux Setup](./linux.md)
-3. [Emulator Guide](./emulator.md)
-4. Android Cookbook v0.1 Recipe 001 — Device Discovery
-
-## v0.4.0 Verification Scope
-
-Use `make unit-test` for non-integration tests and `python -m pytest -v -m integration tests` after starting the emulator. The latest recorded macOS run passed all 10 non-integration tests; the two integration tests and real Linux/KVM checks remain unverified. The KVM mock suite uses fake devices and commands; see [testing](./testing.md). `make kvm-check` targets Linux x86_64; no headless smoke target or runner is provided; see [Linux/KVM status](./linux-kvm.md).
+For test setup and coverage, see [testing](./testing.md). For physical-device access and day-to-day commands, see the host guides and [emulator guide](./emulator.md).

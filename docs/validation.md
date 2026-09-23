@@ -1,67 +1,59 @@
-# Environment Validation
+# Validate the environment
 
-Android Environment v0.4.0 provides a quick diagnostic and a strict validator.
+Use these checks at different stages of Android Environment v0.4.1 setup:
 
-## Quick Diagnostic
+| Command | Checks | Requires a running emulator? |
+| --- | --- | --- |
+| `make doctor` | Tool availability, SDK environment variable, AVD and device lists | No |
+| `make validate` | Host mapping, SDK directory, tool commands, package IDs, and AVD existence | No |
+| `make kvm-check` | Linux x86_64, KVM device access, emulator acceleration | No |
+| `make emulator-wait` | Boot completion of the first online emulator | Yes |
+| `make headless-status` | ADB visibility, readiness, and AVD identity at `emulator-5554` | No; reports absence |
+
+## Inspect an incomplete setup
 
 ```bash
 make doctor
 ```
 
-The doctor checks whether `java`, `sdkmanager`, `avdmanager`, `adb`, `fastboot`, and `emulator` are on `PATH`. It also prints `ANDROID_HOME`, available AVDs, and ADB devices. It is informational and does not fail merely because a tool is missing.
+The doctor prints whether `java`, `sdkmanager`, `avdmanager`, `adb`, `fastboot`, and `emulator` are on `PATH`. It also prints `ANDROID_HOME`, available AVDs, and connected devices. Missing tools do not cause the doctor to fail; use it for diagnosis rather than as an automation gate.
 
-## Strict Validation
+## Validate provisioning
 
 ```bash
 make validate
 ```
 
-The validator checks:
+The validator checks the SDK directory, supported host mapping, six tool commands, four SDK package IDs, and the configured AVD name. The packages are Platform Tools, Emulator, `ANDROID_PLATFORM`, and the selected system image.
 
-1. Host OS, CPU, and compatible image ABI.
-2. The resolved `ANDROID_HOME` value and SDK directory.
-3. Java and Android command-line tools.
-4. Required SDK packages.
-5. The configured AVD.
-6. Connected devices as additional information.
+On normal completion, it prints `PASS=<count>` and `FAIL=<count>`. A failed check causes exit status 1. If `sdkmanager` is missing, validation exits early without the final counts.
 
-On the normal completion path it ends with `PASS=<count>` and `FAIL=<count>`; a missing `sdkmanager` causes an earlier exit without that summary. Any failure produces exit status `1`, making it suitable for automation. A running emulator is not required, but the configured AVD must exist.
+The validator prints connected devices for information. An empty device list is not a provisioning failure. It does not compare package revisions, inspect an existing AVD's image configuration, test acceleration, or confirm Android boot completion.
 
-## Recommended Workflow
-
-```bash
-make bootstrap
-make install-sdk
-make create-avd
-make validate
-make emulator-start
-```
-
-After launch, check runtime health separately:
-
-```bash
-adb wait-for-device
-adb devices
-adb shell getprop sys.boot_completed
-adb shell getprop ro.build.version.sdk
-```
-
-After boot, expected values are `1` for `sys.boot_completed` and `36` for the SDK level.
-
-## Interpreting Failures
+## Fix a provisioning failure
 
 | Failure | Action |
 | --- | --- |
-| Unsupported host | See [architecture_detection.md](./architecture_detection.md) |
-| SDK directory missing | Install Command-Line Tools or correct/override `ANDROID_HOME` |
-| Tool missing | Add the appropriate SDK directory to `PATH` |
+| Unsupported host | Check [architecture detection](./architecture_detection.md) |
+| SDK directory missing | Correct `ANDROID_HOME` and install Command-Line Tools |
+| Tool missing | Check the tool's installation and `PATH` |
 | Package missing | Run `make install-sdk` |
 | AVD missing | Run `make create-avd` |
 
-If `sdkmanager` is missing, strict validation stops because it cannot inspect packages. Use `make doctor` first for a partially configured workstation.
+All commands found on `PATH` should belong to the SDK selected by `ANDROID_HOME`; validation does not enforce that relationship.
 
-Provisioning validation does not guarantee acceleration, Android boot, or physical-device authorization. Check those with `emulator -accel-check`, `adb devices`, and the boot-completed property. See [emulator.md](./emulator.md).
+## Check runtime readiness
 
-`make kvm-check` is a separate Linux x86_64 host check; it is not part of `make validate` or `make doctor`. See [Linux/KVM status](./linux-kvm.md) for requirements and manual checks.
+Start using the [desktop](./emulator.md) or [headless](./headless.md) workflow. After successful boot, inspect the target device:
 
-The recorded `make unit-test` result is **10 passed, 2 deselected** on macOS. These mock tests do not run provisioning validation or verify real KVM acceleration. The two SDK/emulator integration tests were not run. See [test results and coverage](./testing.md).
+```bash
+adb devices
+adb -s emulator-5554 shell getprop sys.boot_completed
+adb -s emulator-5554 shell getprop ro.build.version.sdk
+```
+
+Replace the serial if the desktop workflow selected a different emulator. Expected values are `1` for boot completion and `36` for API level.
+
+A status query may exit successfully while reporting stopped or booting. Use the start command's readiness result, or `make emulator-wait` for the desktop workflow, when a step must wait for Android.
+
+The current tests do not exercise the provisioning validator end to end. See [test coverage](./testing.md).

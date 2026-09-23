@@ -1,139 +1,64 @@
-# Linux and KVM
+# Check Linux and KVM
 
-Android Environment v0.4.0 adds Linux/KVM host and acceleration checks. Local emulator lifecycle commands remain available.
-
-## Goal
-
-Before running an Android Emulator on Linux, verify that the workstation can provide hardware-assisted virtualization.
-
-The script checks in this order:
-
-```mermaid
-flowchart TD
-    A["Linux"] --> B["x86_64"]
-    B --> C["emulator command"]
-    C --> D["/dev/kvm exists"]
-    D --> E["device readable/writable"]
-    E --> F["emulator -accel-check"]
-    F --> G["PASS"]
-```
-
-## Requirements
-
-The KVM check is intended for the following host setup; this does not replace the broader macOS/Linux ABI mapping used by SDK provisioning:
-
-* Linux
-* x86_64
-* Android Emulator
-* KVM
-* x86_64 Android system images
-
-## Manual Validation
-
-Check the host:
-
-```bash
-uname -s
-uname -m
-```
-
-Expected:
-
-```text
-Linux
-x86_64
-```
-
-Check the KVM device:
-
-```bash
-ls -l /dev/kvm
-```
-
-Check Android Emulator acceleration:
-
-```bash
-emulator -accel-check
-```
-
-A successful check should indicate that KVM is installed and usable.
-
-## Project Validation
-
-The Makefile exposes:
+Android Environment v0.4.1 provides a host check for **Linux x86_64**. Run it after installing the SDK Emulator package:
 
 ```bash
 make kvm-check
 ```
 
-The script validates:
+[check_kvm.sh](../scripts/check_kvm.sh) checks the following in order and stops at the first failure:
 
-1. The host is Linux.
-2. The host architecture is x86_64.
-3. Android Emulator is installed.
+1. The host OS is Linux.
+2. The normalized architecture is `x86_64`.
+3. `emulator` is on `PATH`.
 4. `/dev/kvm` exists.
 5. The current user can read and write `/dev/kvm`.
-6. Android Emulator reports that acceleration is available.
+6. `emulator -accel-check` exits successfully.
 
-## KVM Device
+The script returns 0 on success and non-zero on failure. It does not create an AVD or start an emulator.
 
-Linux exposes KVM through:
+`make headless-start` runs this check automatically. Desktop lifecycle commands and `make validate` do not. On macOS, use `emulator -accel-check` directly.
 
-```text
-/dev/kvm
-```
+## Missing KVM device
 
-The existence of this device indicates that the KVM interface is available to userspace.
-
-Existence alone is not sufficient. The current user also needs permission to access the device.
-
-## Emulator Acceleration
-
-Android Emulator provides:
+Inspect CPU virtualization flags, loaded modules, and the device:
 
 ```bash
-emulator -accel-check
+grep -Ec '(vmx|svm)' /proc/cpuinfo
+lsmod | grep kvm
+ls -l /dev/kvm
 ```
 
-The `emulator_acceleration_available` helper returns the exit status of this command, with output suppressed. The full project check runs it after checking the host, emulator command, and device permissions.
+A non-zero flag count indicates visible CPU virtualization extensions, but does not establish that the current user can use KVM. Check firmware virtualization settings and host KVM configuration. In a VM or container, also check whether the outer host exposes the required virtualization and device access.
 
-## Troubleshooting
-
-### `/dev/kvm` does not exist
-
-Check whether CPU virtualization support is visible:
+On Ubuntu/Debian, KVM tooling can be installed with:
 
 ```bash
-egrep -c '(vmx|svm)' /proc/cpuinfo
+sudo apt install -y qemu-kvm
 ```
 
-A value greater than zero indicates that virtualization extensions are visible to Linux.
+Installing a package inside a container does not expose `/dev/kvm` from the host.
 
-### Permission denied
-
-Inspect:
+## Permission denied
 
 ```bash
 ls -l /dev/kvm
-groups
+id
+test -r /dev/kvm && test -w /dev/kvm && echo "KVM ACCESS OK"
 ```
 
-The Linux account must have appropriate permission to access the KVM device.
+If access fails, follow the [device-group instructions](./linux.md#the-user-is-missing-from-the-device-group). That guide also covers Codespaces and numeric group IDs in containers.
 
-### Emulator acceleration fails
+## Acceleration check fails
 
-Run:
+Run the underlying command to see its diagnostic output:
 
 ```bash
 emulator -accel-check
 ```
 
-directly and inspect its diagnostic output.
+Resolve this failure before starting the headless workflow. Software graphics in headless mode does not replace CPU virtualization.
 
-## Scope and test status
+## Test coverage
 
-The KVM check is intended to inspect host readiness without starting an emulator. Existing `make emulator-start`, wait, status, stop, and reset commands still operate independently and do not call the KVM check. `make validate` also does not check KVM.
-
-There is no `make headless-smoke` target or `scripts/run_headless_smoke.sh` runner. The reserved CI settings in `config/android.env` are unused; automated headless execution and cleanup are not implemented in this tree.
-
-The 2026-09-22 macOS `make unit-test` run reports **10 passed, 2 deselected**: six emulator helper tests and four KVM mock tests passed. Bash syntax checks also passed. The two integration tests were excluded; neither real Linux/KVM acceleration nor the complete Linux host check was exercised. Device permission checks are not covered by the current mock suite. See [testing](./testing.md) for results and coverage limits, and [configuration](./configuration.md) for active versus unused settings.
+[kvm.sh](../scripts/lib/kvm.sh) contains the device-existence, access, and acceleration helpers. Four [mock tests](../tests/test_kvm.py) cover device existence and acceleration command results. They do not test real KVM, device permissions, or the complete host-check script. See [testing](./testing.md) for results.

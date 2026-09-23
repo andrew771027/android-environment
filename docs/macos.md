@@ -1,394 +1,111 @@
-# Android Environment on macOS
+# Set up macOS
 
-This guide prepares a macOS workstation for Android Environment v0.4.0 and Android Cookbook.
+Prepare a macOS host for Android Environment v0.4.1. The SDK target is Android 16 / API 36. Android Studio is optional.
 
-The preferred setup is command-line first. Android Studio is optional.
-
-## 1. Check the Mac Architecture
+## 1. Check the architecture
 
 ```bash
-uname -s
 uname -m
 ```
 
-Typical results:
+Use the Apple Silicon download for `arm64`, or the Intel download for `x86_64`. The installer selects the corresponding emulator image automatically.
 
-Apple Silicon:
+## 2. Install prerequisites
 
-```text
-Darwin
-arm64
-```
-
-Intel Mac:
-
-```text
-Darwin
-x86_64
-```
-
-The CPU architecture matters because emulator system images should match the host architecture when possible for hardware-accelerated virtualization.
-
-## 2. Install Homebrew
-
-If Homebrew is already installed:
-
-```bash
-brew --version
-```
-
-Otherwise install it from the official Homebrew project before continuing.
-
-Homebrew is convenient but not a strict requirement of Android itself.
-
-## 3. Install Java
-
-For this repository, JDK 17 is the recommended baseline:
+With Homebrew installed, install the project's recommended JDK:
 
 ```bash
 brew install openjdk@17
 ```
 
-Check installation:
+Follow Homebrew's installation output to make the JDK available in your shell. Check the tools used by the setup instructions:
 
 ```bash
 java -version
-```
-
-If `java` is not found, follow the Homebrew output to expose the JDK to macOS and update `PATH` if required.
-
-Optional repository check:
-
-```bash
-/usr/libexec/java_home -V
-```
-
-## 4. Install Utility Dependencies
-
-Check:
-
-```bash
+command -v bash
+command -v make
 command -v curl
 command -v unzip
 ```
 
-macOS normally provides these already.
+macOS provides `curl` and `unzip`; no `wget` installation is needed.
 
-## 5. Create the Android SDK Directory
+## 3. Download Command-Line Tools
 
-```bash
-mkdir -p "$HOME/Android/Sdk/cmdline-tools"
-```
+Download **Android SDK Command-Line Tools 22.0 / build 15859902** from [Google](https://developer.android.com/studio#command-line-tools-only).
 
-This repository uses:
-
-```text
-~/Android/Sdk
-```
-
-as its default SDK location.
-
-## 6. Install Android Command-Line Tools
-
-Download the current **Android SDK Command-Line Tools for macOS** from the Android Developers download page.
-
-Choose the package matching the host architecture when architecture-specific packages are offered.
-
-After downloading, extract it into a temporary directory. For example:
+Apple Silicon:
 
 ```bash
-mkdir -p /tmp/android-cmdline-tools
-unzip ~/Downloads/commandlinetools-*-latest.zip \
-  -d /tmp/android-cmdline-tools
+curl -LO https://dl.google.com/android/repository/commandlinetools-mac_arm64-15859902_latest.zip
 ```
 
-Move the extracted `cmdline-tools` directory into the SDK using the `latest` layout:
+Intel Mac:
 
 ```bash
-mkdir -p "$HOME/Android/Sdk/cmdline-tools/latest"
-
-cp -R /tmp/android-cmdline-tools/cmdline-tools/. \
-  "$HOME/Android/Sdk/cmdline-tools/latest/"
+curl -LO https://dl.google.com/android/repository/commandlinetools-mac_x86_64-15859902_latest.zip
 ```
 
-Verify:
+Extract the archive and place its contents under `~/Android/Sdk/cmdline-tools/latest/`. The resulting executable must be `latest/bin/sdkmanager`, not `latest/cmdline-tools/bin/sdkmanager`.
+
+## 4. Configure the shell
+
+Add these lines to `~/.zshrc`:
 
 ```bash
-ls "$HOME/Android/Sdk/cmdline-tools/latest/bin"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-You should see tools including:
-
-```text
-sdkmanager
-avdmanager
-```
-
-## 7. Configure zsh
-
-Modern macOS defaults to zsh.
-
-Edit:
-
-```bash
-nano ~/.zshrc
-```
-
-Add:
-
-```bash
-export ANDROID_HOME="$HOME/Android/Sdk"
-export PATH="$ANDROID_HOME/platform-tools:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-```
-
-Reload:
+Reload and verify:
 
 ```bash
 source ~/.zshrc
-```
-
-Verify:
-
-```bash
-echo "$ANDROID_HOME"
 sdkmanager --version
-avdmanager --help | head
 ```
 
-## 8. Install Android SDK Packages
+If you use another shell, put the exports in that shell's startup file.
 
-From the Android Environment repository:
+## 5. Provision and start the emulator
+
+From the repository root:
 
 ```bash
+make bootstrap
 make install-sdk
-```
-
-Or run:
-
-```bash
-./scripts/install_sdk.sh
-```
-
-Verify core packages:
-
-```bash
-sdkmanager --list_installed
-```
-
-## 9. Architecture-aware Emulator Image
-
-The environment script should detect:
-
-```bash
-uname -m
-```
-
-and choose the appropriate system image.
-
-Conceptually:
-
-```text
-Apple Silicon (arm64)
-    ↓
-arm64-v8a Android system image
-
-Intel Mac (x86_64)
-    ↓
-x86_64 Android system image
-```
-
-Do not hard-code an image package without checking that it exists for the selected Android API and channel:
-
-```bash
-sdkmanager --list
-```
-
-Search for Android 16 images:
-
-```bash
-sdkmanager --list | grep 'system-images;android-36'
-```
-
-Then install the architecture-compatible image selected by `config/android.env` / `install_sdk.sh`.
-
-## 10. Verify Emulator Acceleration
-
-Run:
-
-```bash
-emulator -accel-check
-```
-
-A healthy environment should report that virtualization support is usable.
-
-If it does not, verify:
-
-- macOS is supported by the installed Emulator version.
-- The emulator package is current.
-- The system image architecture matches the host architecture.
-- No other virtualization configuration is interfering.
-
-## 11. Create the Cookbook AVD
-
-```bash
 make create-avd
-```
-
-Then:
-
-```bash
-emulator -list-avds
-```
-
-Expected:
-
-```text
-cookbook_pixel_api_36
-```
-
-## 12. Start the Emulator
-
-```bash
+make validate
+emulator -accel-check
 make emulator-start
 ```
 
-Or:
+The baseline AVD is `cookbook_pixel_api_36`, using the `pixel_7` profile. Apple Silicon uses `system-images;android-36;google_apis;arm64-v8a`; Intel uses `system-images;android-36;google_apis;x86_64`.
 
-```bash
-emulator -avd cookbook_pixel_api_36
-```
-
-See [emulator.md](./emulator.md) for boot checks and lifecycle commands.
-
-## 13. Test ADB
+After start succeeds:
 
 ```bash
 adb devices
-```
-
-Then:
-
-```bash
-adb shell getprop ro.product.model
 adb shell getprop ro.build.version.sdk
 ```
 
-## 14. Physical Pixel on macOS
+The API level should be `36`. Stop the emulator with `make emulator-stop`.
 
-macOS does not require the Google USB driver used by Windows.
+Use `emulator -accel-check` for macOS acceleration diagnostics. `make kvm-check` and `make headless-start` require Linux x86_64.
 
-For a physical Pixel:
+## Connect a physical device
 
-1. Enable Developer options on the phone.
-2. Enable USB debugging.
-3. Connect the phone by USB.
-4. Accept the RSA authorization dialog on the device.
-5. Run:
+Enable Developer options and USB debugging on the device, connect it by USB, then run `adb devices`. Unlock the device and accept the debugging authorization prompt if the state is `unauthorized`.
 
-```bash
-adb devices
-```
+When a phone and emulator are both connected, use `adb -s SERIAL` for device commands. A physical device is optional for this setup.
 
-Expected:
+## Troubleshoot
 
-```text
-SERIAL_NUMBER    device
-```
+| Problem | Check |
+| --- | --- |
+| `sdkmanager` is missing | Check `cmdline-tools/latest/bin/sdkmanager`, then reload `~/.zshrc` |
+| `adb` is missing | Run `make install-sdk`; check `platform-tools` on `PATH` |
+| No AVD is listed | Run `make create-avd`, then `emulator -list-avds` |
+| Acceleration is unavailable | Inspect `emulator -accel-check` and confirm the image ABI matches the host |
+| Boot times out | Inspect `emulator.log`; the process may still be running |
 
-If it reports:
-
-```text
-unauthorized
-```
-
-unlock the phone and accept the USB debugging authorization dialog.
-
-## 15. Useful Checks
-
-```bash
-java -version
-sdkmanager --version
-adb version
-fastboot --version
-emulator -version
-emulator -accel-check
-emulator -list-avds
-adb devices
-```
-
-Or simply:
-
-```bash
-make doctor
-```
-
-Run the v0.4.0 strict provisioning check with:
-
-```bash
-make validate
-```
-
-## 16. Common Problems
-
-### `sdkmanager: command not found`
-
-Check:
-
-```bash
-ls "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-echo "$PATH"
-```
-
-Then reload:
-
-```bash
-source ~/.zshrc
-```
-
-### `adb: command not found`
-
-Check:
-
-```bash
-ls "$ANDROID_HOME/platform-tools/adb"
-```
-
-If it is missing:
-
-```bash
-sdkmanager "platform-tools"
-```
-
-### Emulator is slow
-
-Check:
-
-```bash
-emulator -accel-check
-```
-
-Also confirm that the AVD system image architecture matches the Mac CPU architecture.
-
-### Emulator cannot find the AVD
-
-```bash
-emulator -list-avds
-```
-
-AVD configuration normally lives below the user's Android configuration directory, commonly under:
-
-```text
-~/.android/avd/
-```
-
-Do not commit this directory to Git.
-
-## 17. Done
-
-Return to [setup.md](./setup.md) and continue with the common setup flow.
-
-## v0.4.0 Test and KVM Scope
-
-`make unit-test` excludes integration tests. The 2026-09-22 macOS run passed all 10 mock tests, including four KVM cases; two integration tests were excluded. These mocks do not verify hardware acceleration. See [testing](./testing.md). The KVM host check targets Linux x86_64 and is not a macOS acceleration check. Local lifecycle commands continue to use the first online emulator.
+See [setup](./setup.md) for the SDK version scope, [emulator operation](./emulator.md) for daily commands, and [testing](./testing.md) for test results.

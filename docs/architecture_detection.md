@@ -1,45 +1,41 @@
-# Architecture Detection
+# Host architecture and system images
 
-Android Environment v0.4.0 chooses an emulator system-image ABI from the workstation OS and CPU. `scripts/lib/platform.sh` is shared by SDK installation, AVD creation, and validation.
+Android Environment v0.4.1 uses [platform.sh](../scripts/lib/platform.sh) to select an Android system-image ABI during SDK installation, AVD creation, and validation.
 
-## Supported Matrix
+## Host mapping
 
-| `uname -s` | `uname -m` | Normalized host | Image ABI |
+| OS from `uname -s` | CPU from `uname -m` | Normalized host | Image ABI |
 | --- | --- | --- | --- |
 | `Darwin` | `arm64` / `aarch64` | `darwin-arm64` | `arm64-v8a` |
 | `Darwin` | `x86_64` / `amd64` | `darwin-x86_64` | `x86_64` |
 | `Linux` | `arm64` / `aarch64` | `linux-arm64` | `arm64-v8a` |
 | `Linux` | `x86_64` / `amd64` | `linux-x86_64` | `x86_64` |
 
-Other combinations return `unsupported` and make installation or validation fail clearly.
+Other values resolve to `unsupported`. This table describes code mappings, not verified host support. In particular, the Linux/KVM check and headless start accept only Linux x86_64.
 
-## Detection Flow
+## Package selection
+
+The scripts combine API level, image flavor, and image ABI:
 
 ```text
-uname -s -> detect_os ----\
-                           +-> resolve_system_image_arch -> image ABI
-uname -m -> detect_arch --/
+system-images;android-<API>;<flavor>;<ABI>
 ```
 
-The package is assembled from configuration:
-
-```bash
-SYSTEM_IMAGE="system-images;android-${ANDROID_API_LEVEL};${SYSTEM_IMAGE_FLAVOR};${ANDROID_IMAGE_ARCH}"
-```
-
-With v0.4.0 defaults, Apple Silicon resolves to:
+With the repository defaults, Apple Silicon resolves to:
 
 ```text
 system-images;android-36;google_apis;arm64-v8a
 ```
 
-x86_64 Linux and Intel Mac resolve to:
+Intel Mac and Linux x86_64 resolve to:
 
 ```text
 system-images;android-36;google_apis;x86_64
 ```
 
-## Verify the Result
+The mapping does not install virtualization support or prove that emulator binaries work on a host.
+
+## Check the selection
 
 ```bash
 uname -s
@@ -47,14 +43,6 @@ uname -m
 make validate
 ```
 
-The validator's `Host` section shows the normalized OS, CPU, and image architecture. `make install-sdk` prints the same selection before checking packages.
+The validator prints the normalized OS, CPU, and selected image ABI. `make install-sdk` prints its selection before installing packages.
 
-A matching ABI gives the expected virtualization path and usually the best performance. Verify acceleration separately:
-
-```bash
-emulator -accel-check
-```
-
-Architecture detection does not enable macOS virtualization, Linux KVM, or nested virtualization.
-
-The separate KVM check targets Linux x86_64. This does not restrict the ABI mapping above or prove acceleration is available. See [Linux/KVM status](./linux-kvm.md).
+Check acceleration separately with `emulator -accel-check`, or use `make kvm-check` on Linux x86_64. See [Linux and KVM](./linux-kvm.md) for details.
