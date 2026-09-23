@@ -102,6 +102,20 @@ python -m pytest -v -m integration tests
 
 The mock suite passed during this documentation update. It does not establish that Linux/KVM or the complete headless lifecycle works on a real host. See [testing](./docs/testing.md) for the recorded result and coverage gaps.
 
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ANDROID_HOME` | `$HOME/Android/Sdk` | SDK root; preserves the caller's value |
+| `ANDROID_API_LEVEL` | `36` | API used to derive platform, system image, and AVD name |
+| `SYSTEM_IMAGE_FLAVOR` | `google_apis` | System-image flavor |
+| `AVD_NAME` | `cookbook_pixel_api_36` | AVD to create, launch, reset, or delete |
+| `AVD_DEVICE` | `pixel_7` | Hardware profile for AVD creation |
+| `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot polling wait budget |
+| `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Delay between readiness checks |
+| `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Start with `-no-snapshot-load` |
+| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Start with `-no-boot-anim` |
+
+Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these assignments overwrite caller-provided values when sourced. Reset always uses both launch flags regardless of these toggles. When changing the API level, also update `config/packages.txt`; custom AVD names require updating the hardcoded integration-test expectation.
+
 ## Documentation
 
 | Task | Guide |
