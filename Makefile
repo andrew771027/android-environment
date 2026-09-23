@@ -11,6 +11,9 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	emulator-status \
 	emulator-stop \
 	emulator-reset \
+	headless-start \
+	headless-status \
+	headless-stop \
 	doctor \
 	validate \
 	devices \
@@ -43,6 +46,15 @@ emulator-stop:
 
 emulator-reset:
 	./scripts/reset_emulator.sh
+
+headless-start:
+	./scripts/headless_start.sh
+
+headless-status:
+	./scripts/headless_status.sh
+
+headless-stop:
+	./scripts/headless_stop.sh
 
 doctor:
 	./scripts/doctor.sh

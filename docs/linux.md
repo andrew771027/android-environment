@@ -1,403 +1,179 @@
-# Android Environment on Linux
+# Set up Linux
 
-This guide prepares a Linux workstation for Android Environment v0.4.0 and Android Cookbook.
+Prepare a Linux host for Android Environment v0.4.1. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
 
-The examples use Ubuntu/Debian-style package commands. Adjust package installation commands for other distributions.
-
-## 1. Check the Host
+## 1. Check the host
 
 ```bash
 uname -s
 uname -m
-```
-
-Expected baseline:
-
-```text
-Linux
-x86_64
-```
-
-Check distribution information:
-
-```bash
 cat /etc/os-release
 ```
 
-## 2. Update Packages
+For headless operation, the expected OS and architecture are `Linux` and `x86_64`. The provisioning code also maps ARM64 to an image ABI, but the KVM check rejects that host architecture. See [architecture detection](./architecture_detection.md).
 
-Ubuntu / Debian:
+## 2. Install prerequisites
 
 ```bash
 sudo apt update
-```
-
-## 3. Install Java and Utilities
-
-For this repository, JDK 17 is the recommended baseline:
-
-```bash
-sudo apt install -y \
-  openjdk-17-jdk \
-  curl \
-  unzip
+sudo apt install -y openjdk-17-jdk make unzip wget
 ```
 
 Verify:
 
 ```bash
 java -version
-curl --version
-unzip -v | head
+command -v bash
+command -v make
+command -v unzip
+command -v wget
 ```
 
-## 4. Create the Android SDK Directory
+## 3. Download Command-Line Tools
+
+Download **Android SDK Command-Line Tools 22.0 / build 15859902** from [Google](https://developer.android.com/studio#command-line-tools-only):
 
 ```bash
-mkdir -p "$HOME/Android/Sdk/cmdline-tools"
+wget https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip
 ```
 
-## 5. Install Android Command-Line Tools
+Extract the archive and place its contents under `~/Android/Sdk/cmdline-tools/latest/`. Verify that `latest/bin/sdkmanager` exists; avoid an extra nested `cmdline-tools` directory.
 
-Download the current **Android SDK Command-Line Tools for Linux** from Android Developers.
+## 4. Configure the shell
 
-Assuming the archive is in `~/Downloads`:
+Add these lines to `~/.bashrc`:
 
 ```bash
-mkdir -p /tmp/android-cmdline-tools
-
-unzip ~/Downloads/commandlinetools-linux-*_latest.zip \
-  -d /tmp/android-cmdline-tools
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 ```
 
-Create the expected SDK layout:
-
-```bash
-mkdir -p "$HOME/Android/Sdk/cmdline-tools/latest"
-
-cp -R /tmp/android-cmdline-tools/cmdline-tools/. \
-  "$HOME/Android/Sdk/cmdline-tools/latest/"
-```
-
-Verify:
-
-```bash
-ls "$HOME/Android/Sdk/cmdline-tools/latest/bin"
-```
-
-## 6. Configure bash
-
-Edit:
-
-```bash
-nano ~/.bashrc
-```
-
-Add:
-
-```bash
-export ANDROID_HOME="$HOME/Android/Sdk"
-export PATH="$ANDROID_HOME/platform-tools:$PATH"
-export PATH="$ANDROID_HOME/emulator:$PATH"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
-```
-
-Reload:
+Reload and verify:
 
 ```bash
 source ~/.bashrc
-```
-
-Verify:
-
-```bash
-echo "$ANDROID_HOME"
 sdkmanager --version
 ```
 
-If your Linux workstation uses zsh instead, place the exports in `~/.zshrc`.
+If you use zsh, use `~/.zshrc` instead.
 
-## 7. Install Android Packages
+## 5. Install packages and create the AVD
 
-From the repository:
+From the repository root:
 
 ```bash
+make bootstrap
 make install-sdk
+make create-avd
+make validate
 ```
 
-Or:
+On Linux x86_64, the image package is `system-images;android-36;google_apis;x86_64`. The AVD is `cookbook_pixel_api_36`, using the `pixel_7` profile.
+
+## 6. Check KVM
 
 ```bash
-./scripts/install_sdk.sh
+make kvm-check
 ```
 
-Typical packages include:
+The check requires `/dev/kvm` to exist and be readable and writable by the current user. It also runs `emulator -accel-check`. It does not configure virtualization or install KVM.
 
-```bash
-sdkmanager \
-  "platform-tools" \
-  "emulator" \
-  "platforms;android-36"
-```
-
-Install the Android 16 x86_64 system image selected by the repository configuration.
-
-List available Android 16 images:
-
-```bash
-sdkmanager --list | grep 'system-images;android-36'
-```
-
-## 8. Check Linux Virtualization
-
-The Android Emulator performs best with hardware virtualization.
-
-First check whether the CPU advertises virtualization support:
-
-```bash
-egrep -c '(vmx|svm)' /proc/cpuinfo
-```
-
-A value greater than zero usually indicates that the CPU exposes virtualization extensions.
-
-Then check the Android Emulator view:
-
-```bash
-emulator -accel-check
-```
-
-On Linux, accelerated Android Emulator execution normally uses KVM.
-
-## 9. Check KVM
-
-Check for the device:
-
-```bash
-ls -l /dev/kvm
-```
-
-Check kernel modules:
-
-```bash
-lsmod | grep kvm
-```
-
-Possible output:
-
-```text
-kvm_intel
-kvm
-```
-
-or:
-
-```text
-kvm_amd
-kvm
-```
-
-If `/dev/kvm` is missing, verify that virtualization is enabled in BIOS/UEFI and that KVM is installed/configured for the distribution.
-
-On Ubuntu/Debian, packages commonly used for KVM tooling include:
-
-```bash
-sudo apt install -y qemu-kvm
-```
-
-Your Linux distribution and environment may require additional configuration.
-
-## 10. Check KVM Permissions
-
-If `/dev/kvm` exists but the emulator reports permission problems:
+If the check fails, inspect:
 
 ```bash
 ls -l /dev/kvm
 id
+emulator -accel-check
 ```
 
-On systems configured with a `kvm` group, the account may need group access.
+See [Linux and KVM](./linux-kvm.md) for missing-device and acceleration failures. The following sections cover device permissions, including Codespaces and containers.
 
-For example:
+### The user is missing from the device group
+
+A device can exist while remaining inaccessible to the current user. For example, `crw-rw---- root kvm` allows access to root and members of `kvm`.
+
+Inspect the owner, numeric group, and current memberships:
+
+```bash
+stat -c 'uid=%u gid=%g user=%U group=%G mode=%A' /dev/kvm
+id
+getent group kvm
+```
+
+If the device is owned by `kvm` and the account is not a member:
 
 ```bash
 sudo usermod -aG kvm "$USER"
 ```
 
-Log out and log back in before testing again.
-
-Do not use broad permissions such as `chmod 777 /dev/kvm` as a normal solution.
-
-## 11. Create the Cookbook AVD
+Log out and reconnect so the session picks up the new membership. For a temporary shell with the new group, use `newgrp kvm`. Then verify:
 
 ```bash
-make create-avd
+id
+test -r /dev/kvm && test -w /dev/kvm && echo "KVM ACCESS OK"
+make kvm-check
 ```
 
-Verify:
+This also applies to a Codespace where `/dev/kvm` is exposed but the `codespace` user lacks the device's group. Reconnecting the session may be necessary. Group membership cannot make an absent device or unavailable virtualization feature appear.
+
+### The device group has no name in the container
+
+An exposed device can have a numeric group ID that is missing from the container's group database. Check it before creating a group:
 
 ```bash
-emulator -list-avds
+stat -c '%g' /dev/kvm
+getent group "$(stat -c '%g' /dev/kvm)"
 ```
 
-Expected:
+If the numeric group already exists, add the user to that group. If it is absent, and you administer the environment, create a matching group with an unused name. For example, when `kvm` is also unused:
 
-```text
-cookbook_pixel_api_36
+```bash
+KVM_GID="$(stat -c '%g' /dev/kvm)"
+sudo groupadd -g "$KVM_GID" kvm
+sudo usermod -aG kvm "$USER"
 ```
 
-## 12. Start the Emulator
+Reconnect or use `newgrp kvm`, then repeat the access check. Avoid `chmod 777 /dev/kvm`; use the device's group permissions.
 
-Desktop Linux:
+## 7. Start Android
+
+For a desktop session:
 
 ```bash
 make emulator-start
+make emulator-status
 ```
 
-Or:
+For a host without a display:
 
 ```bash
-emulator -avd cookbook_pixel_api_36
+make headless-start
+make headless-status
 ```
 
-For a workstation without a graphical desktop, see the headless section in [emulator.md](./emulator.md).
+Headless start calls the KVM check, rejects existing emulators in the ADB list, and uses port 5554. Read [headless operation](./headless.md) for shutdown and failure handling.
 
-## 13. Verify ADB
+Verify the API level:
 
 ```bash
 adb devices
-```
-
-Then:
-
-```bash
-adb shell getprop ro.product.model
-adb shell getprop ro.build.version.release
 adb shell getprop ro.build.version.sdk
 ```
 
-## 14. Physical Android Devices on Linux
+The expected value is `36`. Use `make emulator-stop` for the desktop workflow or `make headless-stop` for the headless workflow.
 
-Unlike Windows, Linux does not use the Google USB driver package described for Windows hosts. However, Linux USB permissions and udev rules can affect device access.
+## Connect a physical device
 
-Start with:
+Enable USB debugging, connect the device, and accept the debugging authorization prompt. Use `adb devices` to check the connection. If it is absent, inspect the USB connection with `lsusb` and check the distribution's USB permissions and udev rules. A physical device is optional.
 
-```bash
-adb devices
-```
+## Troubleshoot
 
-If the phone does not appear:
+| Problem | Next step |
+| --- | --- |
+| `sdkmanager` is missing | Check the extracted directory layout and reload the shell configuration |
+| SDK package or AVD is missing | Run `make install-sdk`, `make create-avd`, and `make validate` |
+| KVM check fails | Check device access and [acceleration diagnostics](./linux-kvm.md) |
+| Emulator does not finish booting | Inspect `emulator.log` or `artifacts/headless-emulator.log` |
+| Multiple ADB devices are connected | Use `adb -s SERIAL` |
 
-```bash
-lsusb
-```
-
-Then verify:
-
-- Developer options are enabled.
-- USB debugging is enabled.
-- The phone is unlocked.
-- The RSA debugging prompt was accepted.
-- Linux USB permissions permit access to the device.
-
-For Android Cookbook, a physical device remains optional.
-
-## 15. Headless / Remote Linux Workstations
-
-Do not start with this mode unless necessary.
-
-A remote workstation often introduces extra concerns:
-
-```text
-SSH session
-    ↓
-No desktop display
-    ↓
-Headless Android Emulator
-    ↓
-KVM permissions
-    ↓
-ADB lifecycle
-```
-
-For manual headless execution, the emulator command can be run directly:
-
-```bash
-emulator \
-  -avd cookbook_pixel_api_36 \
-  -no-window \
-  -no-audio
-```
-
-The v0.4.0 local launcher starts an interactive emulator. No `make headless-smoke` target or runner is provided to automate this workflow. For the Linux x86_64 `make kvm-check` command, see [Linux/KVM status](./linux-kvm.md) for details and manual checks.
-
-## 16. Useful Checks
-
-```bash
-java -version
-sdkmanager --version
-adb version
-fastboot --version
-emulator -version
-emulator -accel-check
-emulator -list-avds
-adb devices
-ls -l /dev/kvm
-```
-
-Or:
-
-```bash
-make doctor
-```
-
-Run the v0.4.0 strict provisioning check with:
-
-```bash
-make validate
-```
-
-## 17. Common Problems
-
-### `sdkmanager: command not found`
-
-```bash
-ls "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-echo "$PATH"
-source ~/.bashrc
-```
-
-### Emulator reports KVM unavailable
-
-Check:
-
-```bash
-egrep -c '(vmx|svm)' /proc/cpuinfo
-ls -l /dev/kvm
-lsmod | grep kvm
-emulator -accel-check
-```
-
-Possible causes include:
-
-- BIOS/UEFI virtualization disabled.
-- Running inside another VM without nested virtualization.
-- KVM unavailable on the host.
-- Permission denied on `/dev/kvm`.
-
-### ADB sees no devices
-
-Restart the ADB server:
-
-```bash
-adb kill-server
-adb start-server
-adb devices
-```
-
-### Emulator is running remotely but no UI appears
-
-You are probably on a headless host. Use a headless emulator configuration instead of assuming a desktop display exists.
-
-## 18. Done
-
-Return to [setup.md](./setup.md) and continue with the common setup flow.
+See [testing](./testing.md) for the checks performed during this documentation update. Mock tests do not verify this host's KVM or emulator behavior.

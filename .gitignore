@@ -4,6 +4,7 @@
 
 *.log
 emulator.log
+nohup.out
 
 .env
 
@@ -13,4 +14,4 @@ __pycache__/
 
 *.pyc
 
-download/
+downloads/

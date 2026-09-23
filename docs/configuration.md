@@ -1,41 +1,48 @@
 # Configuration
 
-Android Environment v0.4.0 separates project defaults from the static SDK package list.
+Android Environment v0.4.1 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
-## `config/android.env`
+## SDK and AVD defaults
 
-| Variable | v0.4.0 default | Purpose |
+| Variable | Default | Used for |
 | --- | --- | --- |
-| `ANDROID_API_LEVEL` | `36` | Pinned Android API level |
-| `ANDROID_PLATFORM` | `platforms;android-36` | Platform derived from the API level |
-| `AVD_NAME` | `cookbook_pixel_api_36` | Project AVD derived from the API level |
-| `AVD_DEVICE` | `pixel_7` | `avdmanager` hardware profile ID |
-| `SYSTEM_IMAGE_FLAVOR` | `google_apis` | Emulator image flavor |
-| `ANDROID_HOME` | `$HOME/Android/Sdk` | SDK root unless set by the caller |
+| `ANDROID_HOME` | `$HOME/Android/Sdk` | SDK root; preserves a value supplied by the caller |
+| `ANDROID_API_LEVEL` | `36` | Platform, system-image, and AVD-name construction |
+| `ANDROID_PLATFORM` | `platforms;android-36` | SDK Platform package |
+| `SYSTEM_IMAGE_FLAVOR` | `google_apis` | System-image package |
+| `AVD_NAME` | `cookbook_pixel_api_36` | AVD creation, launch, headless identity check, and deletion |
+| `AVD_DEVICE` | `pixel_7` | Hardware profile for AVD creation |
 
-For a custom SDK location:
+For a custom SDK directory:
 
 ```bash
 export ANDROID_HOME="/path/to/Android/Sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 make validate
 ```
 
-Ensure its SDK tools are also on `PATH`. All other settings are assigned unconditionally when sourced; edit `config/android.env` to change them.
+Except for `ANDROID_HOME`, the file assigns values unconditionally. Edit the file to change those defaults; exporting a same-named variable before running Make will not override them.
 
-## Local emulator settings
+## Boot and shutdown settings
 
-| Variable | Default | Behavior |
-| --- | --- | --- |
-| `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot wait budget in accumulated sleep seconds |
-| `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Local boot polling interval |
-| `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Add `-no-snapshot-load` on start |
-| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Add `-no-boot-anim` on start |
+| Variable | Default | Desktop workflow | Headless workflow |
+| --- | --- | --- | --- |
+| `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot polling budget | Boot polling budget |
+| `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Delay between boot checks | Not used; fixed at 1 second |
+| `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Adds `-no-snapshot-load` on start | Not used; start always uses `-no-snapshot` |
+| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Adds `-no-boot-anim` on start | Not used; flag is always enabled |
+| `EMULATOR_PORT` | `5554` | Not used | Not read; launcher hardcodes port 5554 |
+| `EMULATOR_SERIAL` | `emulator-5554` | Not used | Library overwrites it with `emulator-5554` |
+| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Not used; stop hardcodes 30 seconds | Not used; stop does not wait |
+| `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | Not used | Not used |
 
-Reset always uses both flags plus `-wipe-data`. Stop has a hardcoded 30-second polling budget; reset waits for disconnection without a timeout. See [lifecycle behavior](./emulator-lifecycle.md).
+Desktop reset always adds `-wipe-data -no-snapshot-load -no-boot-anim`. Its wait for the previous emulator to disconnect has no timeout.
 
-## `config/packages.txt`
+Polling budgets count sleep time. They do not bound individual ADB calls or total elapsed time.
 
-This file contains one `sdkmanager` package per line. Blank lines and `#` comments are ignored. The v0.4.0 list is:
+## SDK packages
+
+`config/packages.txt` contains:
 
 ```text
 platform-tools
@@ -43,41 +50,14 @@ emulator
 platforms;android-36
 ```
 
-The installer also checks the derived platform and architecture-specific system image. Installed packages are skipped, so rerunning `make install-sdk` is safe.
+The installer ignores blank lines and comments, then also checks `ANDROID_PLATFORM` and the host-specific system image. It skips installed package IDs rather than updating them. Package revisions are not locked.
 
-## Changing the Baseline
+The validator checks the four expected IDs: Platform Tools, Emulator, the configured platform, and the system image. It does not validate arbitrary extra entries added to `packages.txt`.
 
-When changing the API level, update `ANDROID_API_LEVEL` and keep the platform entry in `config/packages.txt` consistent. The API affects `ANDROID_PLATFORM`, `AVD_NAME`, and the system-image package.
+## Keep related settings consistent
 
-Confirm that the desired image and hardware profile exist:
+If a future change adjusts the API level, update both `ANDROID_API_LEVEL` and the platform entry in `packages.txt`. The default AVD name and system-image path derive from that API level.
 
-```bash
-sdkmanager --list | grep 'system-images;android-<API>'
-avdmanager list device -c
-```
+AVD creation checks for an existing name; it does not repair an existing AVD after a configuration change. The integration test also hardcodes `cookbook_pixel_api_36`, so changes to the AVD name require a matching test change.
 
-Then run:
-
-```bash
-make install-sdk
-make create-avd
-make validate
-```
-
-Changing `AVD_NAME` changes which AVD `make emulator-start` starts and `make clean` deletes. Cleanup does not delete the SDK or unrelated AVDs.
-
-Keep portable defaults in `android.env`, static packages in `packages.txt`, and machine-specific SDK paths in the shell environment. Do not commit SDK contents or AVD data.
-
-
-## Reserved CI settings (currently unused)
-
-| Variable | Declared value | Current behavior |
-| --- | --- | --- |
-| `EMULATOR_PORT` | `5554` | Not passed to the emulator |
-| `EMULATOR_SERIAL` | `emulator-5554` | Not used for ADB selection |
-| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Not read by stop/reset |
-| `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | Not read by the boot helpers |
-
-These declarations do not implement an isolated CI workflow. Local helpers still select the first online emulator. No headless smoke target or runner is provided; there is no TERM/KILL fallback or fixed-port enforcement in the existing lifecycle scripts.
-
-The integration test hardcodes `cookbook_pixel_api_36`; changing the configured AVD name also requires adjusting that test expectation.
+This release retains API 36 and the existing SDK management tools. See [setup](./setup.md) for the target and migration scope.
