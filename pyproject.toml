@@ -1,6 +1,6 @@
 [project]
 name = "android-environment"
-version = "0.1.0"
+version = "0.4.2"
 description = ""
 authors = [
     {name = "Andrew Wang",email = "andew771027@gmail.com"}

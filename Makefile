@@ -75,10 +75,8 @@ shell:
 unit-test:
 	"$(PYTHON)" -m pytest -q -m "not integration" tests
 
-# Mock Emulator測試
-# pytest -m "not integration"
-# 真實Emulator測試
-# pytest -m integration
+integration-test:
+	"$(PYTHON)" -m pytest -q -m integration tests
 
 clean:
 	./scripts/cleanup.sh

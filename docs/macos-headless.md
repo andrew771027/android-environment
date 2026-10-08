@@ -1,481 +1,109 @@
-# Android Environment v0.4.2 — macOS Headless Support
+# macOS headless support — v0.4.2
 
-## Overview
+Android Environment v0.4.2 extends the shared headless lifecycle to macOS. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
 
-Android Environment v0.4.2 extends the existing Headless Emulator lifecycle to macOS.
+## Platform behavior
 
-v0.4.1 originally assumed a Linux workstation and directly executed:
+| Host | Acceleration check | System-image ABI |
+| --- | --- | --- |
+| macOS Intel | `emulator -accel-check`, using Hypervisor.Framework | `x86_64` |
+| macOS Apple Silicon | `emulator -accel-check`, using Hypervisor.Framework | `arm64-v8a` |
+| Linux x86_64 | Linux host check, `/dev/kvm` existence and read/write access, `emulator -accel-check` | `x86_64` |
+| Linux ARM64 | Rejected by the current KVM host check | Provisioning maps to `arm64-v8a`, but headless launch is not supported by that check |
+| Other OS | Rejected by the shared acceleration script | Unsupported provisioning mapping |
 
-```bash
-check_kvm.sh
-```
+Image selection comes from [platform.sh](../scripts/lib/platform.sh). The macOS acceleration branch prints the architecture but does not independently validate it. These mappings describe implementation; they do not establish that every host has been tested.
 
-This was appropriate for Linux, but KVM is Linux-specific.
-
-macOS does not provide `/dev/kvm`.
-
-Instead, Android Emulator uses the macOS Hypervisor.Framework for VM acceleration.
-
-The goal of v0.4.2 is therefore:
-
-> Keep one shared Headless Emulator lifecycle while moving host-specific acceleration checks behind a platform abstraction.
-
----
-
-## Architecture
-
-Before v0.4.2:
-
-```text
-Headless Emulator
-       |
-       v
-check_kvm.sh
-       |
-       v
-Linux / KVM
-```
-
-After v0.4.2:
-
-```text
-                 Headless Emulator
-                        |
-                        v
-              check_acceleration.sh
-                   /           \
-                  /             \
-               Linux           macOS
-                 |               |
-                 v               v
-                KVM      Hypervisor.Framework
-```
-
-The lifecycle itself remains platform-independent:
-
-```text
-STOPPED
-   |
-   v
-STARTING
-   |
-   v
-ADB CONNECTED
-   |
-   v
-BOOTING
-   |
-   v
-READY
-   |
-   v
-STOPPED
-```
-
----
-
-## Linux vs macOS
-
-### Linux
-
-Android Emulator hardware acceleration uses KVM.
-
-Relevant concepts include:
-
-```text
-/dev/kvm
-kvm group
-device permissions
-KVM kernel modules
-```
-
-The existing command remains:
-
-```bash
-make kvm-check
-```
-
----
-
-### macOS
-
-macOS does not use `/dev/kvm`.
-
-Android Emulator uses the built-in macOS Hypervisor.Framework.
-
-Check acceleration with:
-
-```bash
-emulator -accel-check
-```
-
-A successful result should indicate that the hypervisor is available and usable.
-
----
-
-## Cross-platform Acceleration Check
-
-v0.4.2 introduces:
-
-```text
-scripts/check_acceleration.sh
-```
-
-Run:
+macOS does not use `/dev/kvm`. `make kvm-check` remains Linux-only. Use the shared command:
 
 ```bash
 make acceleration-check
 ```
 
-The script detects the host platform.
+For detailed macOS diagnostics, run `emulator -accel-check` directly. The helper suppresses the emulator's output and checks its exit status.
 
-Conceptually:
+## Provision and launch
 
-```text
-detect_os
-   |
-   +-- linux
-   |     |
-   |     +-- check_kvm.sh
-   |
-   +-- darwin
-         |
-         +-- emulator -accel-check
-```
-
-This allows the Headless Emulator launcher to avoid Linux-specific knowledge.
-
----
-
-## Starting a Headless Emulator
-
-Create the configured AVD before the first launch:
+Complete [macOS setup](./macos.md), then run from the repository root in your terminal:
 
 ```bash
+make install-sdk
 make create-avd
-```
-
-If creation reports a missing system image, run `make install-sdk` and retry
-`make create-avd`. An existing AVD with a different name does not satisfy the
-configured `AVD_NAME` in `config/android.env`.
-
-Run:
-
-```bash
+make validate
+make acceleration-check
 make headless-start
 ```
 
-The startup flow is now:
+Defaults are API 36, the `google_apis` image, AVD `cookbook_pixel_api_36`, and hardware profile `pixel_7`. A differently named Android Studio AVD does not satisfy the configured AVD name. If creation reports a missing image, run `make install-sdk` and retry `make create-avd`.
 
-```text
-Check adb
-    |
-Check emulator
-    |
-Detect host OS
-    |
-Check platform acceleration
-    |
-Check AVD
-    |
-Start emulator with -no-window
-    |
-Wait for ADB
-    |
-Wait for sys.boot_completed
-    |
-Verify AVD identity
-    |
-READY
-```
-
----
-
-## Headless Emulator Options
-
-The launcher uses:
+Startup rejects any `emulator-*` entry in the ADB list, including offline entries. It uses port 5554, serial `emulator-5554`, and these fixed flags:
 
 ```bash
 emulator \
-    -avd "${AVD_NAME}" \
-    -port 5554 \
-    -no-window \
-    -no-audio \
-    -no-boot-anim \
-    -no-snapshot
+  -avd cookbook_pixel_api_36 \
+  -port 5554 \
+  -no-window \
+  -no-audio \
+  -no-boot-anim \
+  -no-snapshot
 ```
 
-### `-no-window`
+The AVD name comes from configuration. The launcher does not specify `-gpu`. It starts with `nohup`, redirects input from `/dev/null`, and overwrites `artifacts/headless-emulator.log` on each launch.
 
-Disables the Emulator graphical window.
-
-This is the key option for headless execution.
-
-### `-no-audio`
-
-Disables audio support.
-
-Audio is unnecessary for the current Android Environment workflow.
-
-### `-no-boot-anim`
-
-Disables the Android boot animation.
-
-### `-no-snapshot`
-
-Forces a full boot rather than loading or saving Quick Boot state.
-
-This makes the current learning environment more deterministic.
-
----
-
-## Checking Status
-
-Run:
-
-```bash
-make headless-status
-```
-
-Possible states include:
-
-```text
-STOPPED
-```
-
-```text
-BOOTING or OFFLINE: emulator-5554
-```
-
-or:
+Startup waits for ADB state `device` and `sys.boot_completed=1`, then verifies the AVD name. Success prints:
 
 ```text
 READY: cookbook_pixel_api_36 (emulator-5554)
 ```
 
-The definition of READY remains identical across Linux and macOS:
+The default polling budget is 180 seconds; individual ADB call durations are additional. A timeout or identity mismatch exits non-zero and does not automatically stop the emulator.
 
-```text
-adb state == device
-
-AND
-
-sys.boot_completed == 1
-```
-
----
-
-## Stopping
-
-Run:
-
-```bash
-make headless-stop
-```
-
-The script verifies the AVD identity and requests shutdown through:
-
-```bash
-adb -s emulator-5554 emu kill
-```
-
-The stop implementation does not need to know whether the host uses KVM or Hypervisor.Framework.
-
----
-
-## Intel Mac
-
-An Intel Mac reports:
-
-```bash
-uname -m
-```
-
-as:
-
-```text
-x86_64
-```
-
-The matching Android system image can therefore remain:
-
-```text
-system-images;android-36;google_apis;x86_64
-```
-
-The architecture and hypervisor are different concepts:
-
-```text
-Architecture
-    x86_64
-
-Host OS
-    macOS
-
-Virtualization
-    Hypervisor.Framework
-```
-
----
-
-## Apple Silicon
-
-Apple Silicon normally reports:
-
-```text
-arm64
-```
-
-The Android Environment architecture-resolution logic should select the corresponding ARM64 system image.
-
-For example:
-
-```text
-system-images;android-36;google_apis;arm64-v8a
-```
-
-The Headless lifecycle itself remains unchanged.
-
----
-
-## Validation
-
-Check platform information:
-
-```bash
-uname -s
-uname -m
-```
-
-Check Android tooling:
-
-```bash
-command -v adb
-command -v emulator
-```
-
-Check Emulator acceleration:
-
-```bash
-emulator -accel-check
-```
-
-Check AVD:
-
-```bash
-emulator -list-avds
-```
-
-Start:
-
-```bash
-make headless-start
-```
-
-Check:
+## Status and shutdown
 
 ```bash
 make headless-status
-```
-
-Manual Android readiness check:
-
-```bash
 adb devices
 ```
 
-and:
+A ready device should appear as `emulator-5554 device`. `STOPPED` means the target serial is absent from a successful ADB listing. `BOOTING or OFFLINE` means it is listed but not ready. A failed `adb devices` command causes status to report an error and exit 1.
 
-```bash
-adb -s emulator-5554 shell getprop sys.boot_completed
-```
-
-Expected:
-
-```text
-1
-```
-
-Stop:
+To request shutdown:
 
 ```bash
 make headless-stop
+make headless-status
 ```
 
----
+Stop checks readiness and AVD identity before sending `emu kill`. It does not wait for disconnection and refuses to stop an unready or differently named device. See [headless operation](./headless.md) for all status outputs and shutdown limitations.
 
-## Key Learning
+## Troubleshooting
 
-v0.4.2 introduces a small but important architecture improvement.
+| Symptom | Action |
+| --- | --- |
+| `AVD missing: cookbook_pixel_api_36` | Run `make create-avd`; inspect `emulator -list-avds` |
+| Acceleration unavailable | Run `emulator -accel-check` and check the image ABI against the host mapping |
+| Empty ADB list after an earlier `READY` | Check status and the log; the process may have exited or been cleaned up by an external task runner |
+| Boot timeout | Inspect the log and target boot property; startup does not clean up automatically |
+| ADB-listing error | Check `adb` on `PATH`, server availability, and the original ADB error |
+| Existing emulator | Stop it with its own workflow before launching this isolated instance |
 
-The Headless Emulator lifecycle should depend on:
+Useful commands:
 
-```text
-"Acceleration is available"
+```bash
+tail -n 100 artifacts/headless-emulator.log
+adb -s emulator-5554 get-state
+adb -s emulator-5554 shell getprop sys.boot_completed
+adb -s emulator-5554 emu avd name
 ```
 
-rather than:
+`nohup` does not provide supervision or prevent an external runner from terminating a process. Run startup in your own terminal when you need the local emulator to remain running. `READY` establishes readiness at the time of the check.
 
-```text
-"KVM is available"
-```
+## Verification scope
 
-KVM is only one implementation.
+On 2026-10-08, a macOS Intel launch created the baseline AVD and reached `READY`. A later check found no emulator process and an empty ADB list; persistence was not established. Apple Silicon, Linux/KVM, and a complete real start/status/stop sequence were not verified in that session.
 
-Conceptually:
+On 2026-10-08, the user also reported both existing integration tests passing: baseline AVD listing and boot completion of the first online emulator. This result does not identify the launch mode, verify the running AVD identity, or cover shutdown. Integration output and duration were not supplied.
 
-```text
-          Acceleration
-              |
-      +-------+-------+
-      |               |
-     KVM       Hypervisor.Framework
-      |               |
-    Linux            macOS
-```
+All five acceleration mock cases pass after correcting the macOS dispatch assertion spelling. The seven headless tests include status handling for failed ADB listing. See [testing](./testing.md) for full mock results and known helper issues.
 
-This separates:
-
-```text
-WHAT
-
-The Emulator requires VM acceleration.
-```
-
-from:
-
-```text
-HOW
-
-Linux provides KVM.
-
-macOS provides Hypervisor.Framework.
-```
-
-The result is one reusable Headless Emulator lifecycle across multiple host platforms.
-
----
-
-## Version Progression
-
-```text
-v0.4.0
-Linux / KVM
-    |
-    v
-v0.4.1
-Headless Emulator on Linux
-    |
-    v
-v0.4.2
-Cross-platform Headless
-Linux + macOS
-    |
-    v
-v0.4.3
-Smoke Test
-    |
-    v
-v0.4.4
-CI
-```
+Smoke-test automation and CI remain planned for v0.4.3 and v0.4.4; see the [roadmap](../roadmap.md).

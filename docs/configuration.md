@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.4.1 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.4.2 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 

@@ -1,6 +1,6 @@
 # Set up macOS
 
-Prepare a macOS host for Android Environment v0.4.1. The SDK target is Android 16 / API 36. Android Studio is optional.
+Prepare a macOS host for Android Environment v0.4.2. The SDK target is Android 16 / API 36. Android Studio is optional.
 
 ## 1. Check the architecture
 
@@ -75,7 +75,7 @@ make bootstrap
 make install-sdk
 make create-avd
 make validate
-emulator -accel-check
+make acceleration-check
 make emulator-start
 ```
 
@@ -90,7 +90,17 @@ adb shell getprop ro.build.version.sdk
 
 The API level should be `36`. Stop the emulator with `make emulator-stop`.
 
-Use `emulator -accel-check` for macOS acceleration diagnostics. `make kvm-check` and `make headless-start` require Linux x86_64.
+For a headless session, stop any existing emulator and run:
+
+```bash
+make headless-start
+make headless-status
+make headless-stop
+```
+
+Run startup from your own terminal. It uses `nohup`, but external task runners may still clean up background processes. `READY` confirms readiness at the time of the check; it does not guarantee that the emulator will remain running.
+
+Use `make acceleration-check` for the shared check, or `emulator -accel-check` for detailed macOS diagnostics. `make kvm-check` is Linux-only. See [macOS headless](./macos-headless.md) for host mapping and troubleshooting.
 
 ## Connect a physical device
 

@@ -1,6 +1,6 @@
 # Set up Linux
 
-Prepare a Linux host for Android Environment v0.4.1. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
+Prepare a Linux host for Android Environment v0.4.2. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
 
 ## 1. Check the host
 

@@ -1,14 +1,15 @@
 # Run a headless emulator
 
-Android Environment v0.4.1 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on Linux x86_64. The emulator runs without a window and remains accessible through ADB.
+Android Environment v0.4.2 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
 
 ## Before you start
 
-Complete [Linux setup](./linux.md), then check provisioning and KVM:
+Complete [macOS setup](./macos.md) or [Linux setup](./linux.md), create the configured AVD, then check provisioning and acceleration:
 
 ```bash
+make create-avd
 make validate
-make kvm-check
+make acceleration-check
 adb devices
 ```
 
@@ -22,7 +23,7 @@ The scripts use **port 5554** and **serial `emulator-5554`**. Changing `EMULATOR
 make headless-start
 ```
 
-The script checks `adb`, `emulator`, Linux/KVM, AVD existence, and the ADB device list before launching. It runs this emulator command in the background with `nohup`:
+The script checks `adb`, `emulator`, platform acceleration, AVD existence, and the ADB device list before launching. On macOS, `check_acceleration.sh` uses the emulator acceleration check; on Linux, it delegates to the x86_64/KVM check. It runs this emulator command in the background with `nohup`:
 
 ```bash
 emulator \
@@ -31,13 +32,12 @@ emulator \
   -no-window \
   -no-audio \
   -no-boot-anim \
-  -no-snapshot \
-  -gpu software
+  -no-snapshot
 ```
 
-The AVD name comes from configuration. The remaining flags are fixed in the script. Software graphics does not remove the KVM requirement.
+The AVD name comes from configuration. The remaining flags are fixed in the script. The launcher does not specify `-gpu`; graphics selection is left to the emulator. Linux still requires KVM.
 
-Output goes to `artifacts/headless-emulator.log`, which is overwritten on each launch. Standard input is redirected from `/dev/null`. The script prints the launcher PID but does not store a PID file or supervise the process.
+Output goes to `artifacts/headless-emulator.log`, which is overwritten on each launch. Standard input is redirected from `/dev/null`. The script prints the launcher PID but does not store a PID file or supervise the process. Run it from your terminal for a persistent local session; task runners may clean up background processes even when `nohup` is used.
 
 Start waits for both of these conditions:
 
@@ -66,8 +66,9 @@ make headless-status
 | `BOOTING or OFFLINE: emulator-5554` | The serial is listed but does not pass both readiness checks | 0 |
 | `READY: ...` | The device is ready and its AVD name matches | 0 |
 | `UNKNOWN AVD: ...` | The device is ready but its AVD name differs | 1 |
+| `ERROR: Unable to query ADB devices.` | `adb devices` failed; status cannot be determined | 1 |
 
-A successful status command does not necessarily mean Android is ready. ADB visibility also does not prove whether an unlisted emulator process exists. These status meanings assume ADB is installed and working; the status script has no separate tool check.
+A successful status command does not necessarily mean Android is ready. ADB visibility also does not prove whether an unlisted emulator process exists. The status script checks whether `adb devices` succeeds before interpreting the list. Later readiness failures are reported as `BOOTING or OFFLINE`; they are not separately classified as ADB errors.
 
 ## Stop
 
@@ -90,7 +91,10 @@ It refuses to stop an offline, booting, or differently named AVD. There is no fo
 
 | Symptom | Check |
 | --- | --- |
-| Missing SDK tool or AVD | Run `make doctor` and `make validate` |
+| Missing SDK tool or AVD | Run `make doctor` and `make validate`; for a missing AVD, run `make create-avd` |
+| macOS acceleration error | Run `emulator -accel-check`; see [macOS headless](./macos-headless.md) |
+| `STOPPED` or an empty `adb devices` list | No target serial is visible; start from your terminal and inspect the log if it exits |
+| Unable to query ADB devices | Check `adb` on `PATH` and the error printed by `adb devices` |
 | KVM error | Follow [Linux/KVM troubleshooting](./linux-kvm.md) |
 | Existing emulator error | Run `adb devices`; stop the existing emulator using its own workflow |
 | Boot timeout or offline state | Read the log and inspect the target serial with the commands below |
@@ -107,4 +111,4 @@ adb -s emulator-5554 emu avd name
 
 The entry points are [headless_start.sh](../scripts/headless_start.sh), [headless_status.sh](../scripts/headless_status.sh), and [headless_stop.sh](../scripts/headless_stop.sh). They share [headless.sh](../scripts/lib/headless.sh).
 
-Six [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, and AVD-name parsing. They do not run the entry-point scripts or exercise real Linux/KVM. There is no smoke-test runner, automatic timeout cleanup, or CI workflow in this release. See [testing](./testing.md) for the recorded checks.
+Seven [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and the status entry point's ADB-listing failure. They do not exercise real acceleration or the complete start/stop entry points. There is no smoke-test runner, automatic timeout cleanup, or CI workflow in this release. See [testing](./testing.md) for the recorded checks.

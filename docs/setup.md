@@ -1,6 +1,6 @@
 # Set up Android Environment
 
-This guide covers Android Environment v0.4.1. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
+This guide covers Android Environment v0.4.2. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
 ## SDK target
 
@@ -17,7 +17,7 @@ The defaults come from [android.env](../config/android.env), [packages.txt](../c
 | AVD name / hardware profile | `cookbook_pixel_api_36` / `pixel_7` |
 | Command-Line Tools download | 22.0 / build 15859902 |
 
-Linux ARM64 has a package mapping in the scripts; this is not a verified emulator host. The KVM check and headless start require Linux x86_64.
+Linux ARM64 has a package mapping in the scripts; this is not a verified emulator host. The Linux KVM branch requires x86_64; macOS headless start uses the emulator acceleration check instead.
 
 The SDK target describes the installed platform and emulator image. This repository does not configure an application's `targetSdk` or `compileSdk`, and does not install Build Tools or NDK by default.
 
@@ -31,7 +31,7 @@ Use `sdkmanager --list_installed` to record installed revisions. Use `cat "$ANDR
 
 As checked on 2026-09-23, Google marks [`sdkmanager` as deprecated](https://developer.android.com/tools/sdkmanager) and recommends Android CLI's `android sdk` command. This refers to the management tool, not the Android SDK as a whole.
 
-This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.1's scope.
+This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.2's scope.
 
 ## 1. Install host prerequisites
 
@@ -107,14 +107,14 @@ make emulator-start
 make emulator-status
 ```
 
-For Linux x86_64 without a display:
+For macOS or Linux x86_64 without an emulator window:
 
 ```bash
 make headless-start
 make headless-status
 ```
 
-Headless start requires KVM access and no existing emulator in the ADB list. It uses port 5554. See [headless operation](./headless.md) before using it on a shared host.
+Headless start checks platform acceleration: Hypervisor.Framework through the emulator on macOS, or KVM access on Linux x86_64. It requires no existing emulator in the ADB list. It uses port 5554. See [headless operation](./headless.md) before using it on a shared host.
 
 Both start commands wait for Android boot completion. If boot times out, inspect `emulator.log` for desktop mode or `artifacts/headless-emulator.log` for headless mode. A timeout does not automatically stop the background process.
 

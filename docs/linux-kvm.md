@@ -1,6 +1,6 @@
 # Check Linux and KVM
 
-Android Environment v0.4.1 provides a host check for **Linux x86_64**. Run it after installing the SDK Emulator package:
+Android Environment v0.4.2 provides a host check for **Linux x86_64**. Run it after installing the SDK Emulator package:
 
 ```bash
 make kvm-check
@@ -17,7 +17,7 @@ make kvm-check
 
 The script returns 0 on success and non-zero on failure. It does not create an AVD or start an emulator.
 
-`make headless-start` runs this check automatically. Desktop lifecycle commands and `make validate` do not. On macOS, use `emulator -accel-check` directly.
+`make headless-start` runs this check through `check_acceleration.sh` on Linux. Desktop lifecycle commands and `make validate` do not. On macOS, use `make acceleration-check` or `emulator -accel-check` directly; `/dev/kvm` checks do not apply.
 
 ## Missing KVM device
 

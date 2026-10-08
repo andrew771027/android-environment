@@ -6,7 +6,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 LIB = ROOT / "scripts" / "lib" / "acceleration.sh"
 
-def make_fake_emulator(tmp_path: Path, *, accel_exit_code: int, ) -> dict[str, str]:
+
+def make_fake_emulator(
+    tmp_path: Path,
+    *,
+    accel_exit_code: int,
+) -> dict[str, str]:
 
     bin_dir = tmp_path / "bin"
 
@@ -34,6 +39,7 @@ def make_fake_emulator(tmp_path: Path, *, accel_exit_code: int, ) -> dict[str, s
 
     return env
 
+
 def run_bash(
     command: str,
     env: dict[str, str],
@@ -52,6 +58,7 @@ def run_bash(
         timeout=10,
     )
 
+
 def test_macos_acceleration_available(tmp_path: Path):
 
     env = make_fake_emulator(
@@ -65,6 +72,7 @@ def test_macos_acceleration_available(tmp_path: Path):
     )
 
     assert result.returncode == 0
+
 
 def test_macos_acceleration_unavailable(tmp_path: Path):
 
@@ -80,6 +88,7 @@ def test_macos_acceleration_unavailable(tmp_path: Path):
 
     assert result.returncode != 0
 
+
 def test_emulator_exists(tmp_path: Path):
 
     env = make_fake_emulator(
@@ -93,6 +102,7 @@ def test_emulator_exists(tmp_path: Path):
     )
 
     assert result.returncode == 0
+
 
 def test_emulator_missing(tmp_path: Path):
 
@@ -108,7 +118,7 @@ def test_emulator_missing(tmp_path: Path):
         [
             "/bin/bash",
             "-c",
-            f'source "{LIB}"; check_emulator_exists';
+            f'source "{LIB}"; check_emulator_exists;',
         ],
         env=env,
         text=True,
@@ -119,10 +129,11 @@ def test_emulator_missing(tmp_path: Path):
 
     assert result.returncode != 0
 
+
 def test_macos_dispatch(tmp_path: Path):
 
     bin_dir = tmp_path / "bin"
-    
+
     bin_dir.mkdir()
 
     uname = bin_dir / "uname"
@@ -172,4 +183,4 @@ def test_macos_dispatch(tmp_path: Path):
 
     assert result.returncode == 0
 
-    assert "macOS Emulator Acceleration Chcek PASSED" in result.stdout
+    assert "macOS Emulator Acceleration Check PASSED" in result.stdout

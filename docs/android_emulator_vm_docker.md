@@ -1,6 +1,6 @@
 # Android Emulator, virtual machines, and containers
 
-Android Environment v0.4.1 runs Android Emulator as a host process. It includes desktop lifecycle commands and a Linux x86_64 headless workflow. It does not include a Docker image, container launcher, or CI workflow.
+Android Environment v0.4.2 runs Android Emulator as a host process. It includes desktop lifecycle commands and a headless workflow for macOS and Linux x86_64. It does not include a Docker image, container launcher, or CI workflow.
 
 ## What each layer provides
 
@@ -26,7 +26,7 @@ flowchart TD
     ADB[Host adb] --> Android
 ```
 
-`make headless-start` checks Linux/KVM, launches the emulator without a window, and waits for ADB and Android boot readiness. It uses software graphics and still requires KVM access. See [headless operation](./headless.md).
+`make headless-start` dispatches acceleration checks by OS, launches the emulator without a window, and waits for ADB and Android boot readiness. On Linux it requires x86_64 and KVM access. The launcher does not specify a GPU backend. See [headless operation](./headless.md).
 
 `adb shell` runs inside the Android guest. It does not open a shell in the host or a surrounding container.
 
@@ -48,9 +48,9 @@ When Linux itself runs in a VM, the outer virtualization setup determines whethe
 
 ## macOS
 
-The documented macOS workflow runs the SDK and emulator directly on macOS. Its acceleration check is `emulator -accel-check`; the Linux KVM script does not apply.
+The documented macOS workflow runs the SDK and emulator directly on macOS. Both desktop and headless launchers run the emulator as a macOS host process. The shared `make acceleration-check` uses `emulator -accel-check` on macOS; the Linux KVM script does not apply.
 
-Linux containers on macOS run through a Linux VM. Running an emulator inside that environment adds a separate virtualization dependency and is not covered by this repository's host tests. Use the [macOS setup guide](./macos.md) for the documented desktop workflow.
+Linux containers on macOS run through a Linux VM. Running an emulator inside that environment adds a separate virtualization dependency and is not covered by this repository's host tests. Use the [macOS setup guide](./macos.md) for setup, or [macOS headless](./macos-headless.md) for headless operation.
 
 ## Physical devices
 

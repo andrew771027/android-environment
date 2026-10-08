@@ -1,14 +1,15 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.4.1 setup:
+Use these checks at different stages of Android Environment v0.4.2 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
 | `make doctor` | Tool availability, SDK environment variable, AVD and device lists | No |
 | `make validate` | Host mapping, SDK directory, tool commands, package IDs, and AVD existence | No |
+| `make acceleration-check` | macOS emulator acceleration, or Linux x86_64/KVM checks | No |
 | `make kvm-check` | Linux x86_64, KVM device access, emulator acceleration | No |
 | `make emulator-wait` | Boot completion of the first online emulator | Yes |
-| `make headless-status` | ADB visibility, readiness, and AVD identity at `emulator-5554` | No; reports absence |
+| `make headless-status` | ADB visibility, readiness, and AVD identity at `emulator-5554`; fails if device listing fails | No; reports absence |
 
 ## Inspect an incomplete setup
 

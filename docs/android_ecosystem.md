@@ -1,6 +1,6 @@
 # Android 工具與執行環境
 
-本文件說明 Android Environment v0.4.1 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
+本文件說明 Android Environment v0.4.2 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
 
 ## 工具分工
 
@@ -61,7 +61,7 @@ make emulator-start
 adb devices
 ```
 
-Headless 模式仍執行 Android，只是不開啟視窗。Linux 的使用方式請見 [headless](./headless.md)。
+Headless 模式仍執行 Android，只是不開啟視窗。macOS 與 Linux x86_64 的使用方式請見 [headless](./headless.md)。
 
 ## ADB 的主機與裝置邊界
 
