@@ -9,6 +9,8 @@ source "${PROJECT_ROOT}/config/android.env"
 source "${PROJECT_ROOT}/scripts/lib/common.sh"
 source "${PROJECT_ROOT}/scripts/lib/emulator.sh"
 
+mkdir -p "$PROJECT_ROOT/artifacts"
+
 echo "================================"
 echo " Start Android Emulator "
 echo "================================"
@@ -78,8 +80,10 @@ else
     fi
 
     # & 代表 Emulator 在背景執行，並將輸出導向 emulator.log
+    
+    
     emulator "${EMULATOR_ARGS[@]}" \
-        >"${PROJECT_ROOT}/emulator.log" \
+        >"${PROJECT_ROOT}/artifacts/emulator.log" \
         2>&1 &
 
 fi

@@ -1,9 +1,12 @@
 .DS_Store
 .idea/
 .venv
+.pytest_cache/
 
 *.log
 emulator.log
+headless-emulator.log
+
 nohup.out
 
 .env
@@ -15,3 +18,4 @@ __pycache__/
 *.pyc
 
 downloads/
+artifacts/
