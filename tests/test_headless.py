@@ -6,6 +6,28 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 LIB = PROJECT_ROOT / "scripts" / "lib" / "headless.sh"
 
+
+def test_status_reports_adb_failure(tmp_path: Path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    adb = bin_dir / "adb"
+    adb.write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+    adb.chmod(0o755)
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}:{env['PATH']}"
+
+    result = subprocess.run(
+        ["bash", str(PROJECT_ROOT / "scripts" / "headless_status.sh")],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+    )
+
+    assert result.returncode == 1
+    assert "Unable to query ADB devices" in result.stderr
+    assert "STOPPED" not in result.stdout
+
 # --------------------------------------------------
 # Test helper: fake adb
 # --------------------------------------------------

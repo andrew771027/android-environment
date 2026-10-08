@@ -34,6 +34,7 @@ command -v emulator >/dev/null || {
 
 emulator -list-avds | grep -Fxq "$AVD_NAME" || {
     echo "ERROR: AVD missing: $AVD_NAME" >&2
+    echo "Run make create-avd, then retry make headless-start." >&2
     exit 1
 }
 

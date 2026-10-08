@@ -149,6 +149,16 @@ This allows the Headless Emulator launcher to avoid Linux-specific knowledge.
 
 ## Starting a Headless Emulator
 
+Create the configured AVD before the first launch:
+
+```bash
+make create-avd
+```
+
+If creation reports a missing system image, run `make install-sdk` and retry
+`make create-avd`. An existing AVD with a different name does not satisfy the
+configured `AVD_NAME` in `config/android.env`.
+
 Run:
 
 ```bash
