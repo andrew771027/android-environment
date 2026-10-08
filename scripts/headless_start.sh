@@ -23,10 +23,10 @@ command -v emulator >/dev/null || {
 }
 
 # --------------------------------------------------
-# 2. Check Linux / KVM
+# 2. Check Emulator acceleration
 # --------------------------------------------------
 
-"$PROJECT_ROOT/scripts/check_kvm.sh" || exit 1
+"$PROJECT_ROOT/scripts/check_acceleration.sh" || exit 1
 
 # --------------------------------------------------
 # 3. Check AVD exists
@@ -78,7 +78,6 @@ nohup emulator \
     -no-audio \
     -no-boot-anim \
     -no-snapshot \
-    -gpu software \
     >"$log" 2>&1 </dev/null & 
     
 #取得剛剛啟動的背景程序 PID

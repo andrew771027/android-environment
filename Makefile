@@ -4,6 +4,7 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	bootstrap \
 	install-sdk \
 	create-avd \
+	acceleration-check \
 	kvm-check \
 	unit-test \
 	emulator-start \
@@ -22,6 +23,9 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 bootstrap:
 	./scripts/bootstrap.sh
+
+acceleration-check:
+	./scripts/check_acceleration.sh
 
 kvm-check:
 	./scripts/check_kvm.sh
