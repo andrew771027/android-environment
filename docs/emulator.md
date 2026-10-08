@@ -1,6 +1,6 @@
 # Use the Android Emulator
 
-This guide covers desktop emulator operation in Android Environment v0.4.2. Complete [setup](./setup.md) first. For macOS or Linux x86_64 without an emulator window, use the [headless workflow](./headless.md).
+This guide covers desktop emulator operation in Android Environment v0.4.3. Complete [setup](./setup.md) first. For macOS or Linux x86_64 without an emulator window, use the [headless workflow](./headless.md).
 
 An AVD stores a virtual device's configuration and user data. The Emulator is the host program that runs it. The default AVD is `cookbook_pixel_api_36`, with a `pixel_7` hardware profile and an Android 16 / API 36 Google APIs image.
 

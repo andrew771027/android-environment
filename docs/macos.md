@@ -1,6 +1,6 @@
 # Set up macOS
 
-Prepare a macOS host for Android Environment v0.4.2. The SDK target is Android 16 / API 36. Android Studio is optional.
+Prepare a macOS host for Android Environment v0.4.3. The SDK target is Android 16 / API 36. Android Studio is optional.
 
 ## 1. Check the architecture
 
@@ -107,6 +107,17 @@ Use `make acceleration-check` for the shared check, or `emulator -accel-check` f
 Enable Developer options and USB debugging on the device, connect it by USB, then run `adb devices`. Unlock the device and accept the debugging authorization prompt if the state is `unauthorized`.
 
 When a phone and emulator are both connected, use `adb -s SERIAL` for device commands. A physical device is optional for this setup.
+
+## Optional APK build tools
+
+For application builds:
+
+```bash
+make install-build-tools
+make validate-build-tools
+```
+
+This installs the configured Build Tools version, defaulting to 36.0.0. It is independent of emulator operation. Run the application's Gradle Wrapper from the application repository. See [Build Tools](./build-tools.md) for validation limits.
 
 ## Troubleshoot
 

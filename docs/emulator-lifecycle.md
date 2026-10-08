@@ -1,6 +1,6 @@
 # Desktop emulator lifecycle reference
 
-Android Environment v0.4.2's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
+Android Environment v0.4.3's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
 
 ## Device selection
 

@@ -1,3 +1,4 @@
+import pytest
 import subprocess
 from pathlib import Path
 
@@ -47,6 +48,7 @@ def create_executable(
     path.chmod(0o755)
 
 
+@pytest.mark.build_tools
 def test_build_tools_package_name():
 
     result = run_bash('build_tools_package_name "36.0.0"')
@@ -56,6 +58,7 @@ def test_build_tools_package_name():
     assert result.stdout.strip() == "build-tools;36.0.0"
 
 
+@pytest.mark.build_tools
 def test_build_tools_directory(tmp_path: Path):
 
     result = run_bash(f'build_tools_directory "{tmp_path}" "36.0.0"')
@@ -67,6 +70,7 @@ def test_build_tools_directory(tmp_path: Path):
     assert result.stdout.strip() == str(expected)
 
 
+@pytest.mark.build_tools
 def test_build_tools_installed(tmp_path: Path):
 
     create_fake_build_tools(tmp_path)
@@ -76,6 +80,7 @@ def test_build_tools_installed(tmp_path: Path):
     assert result.returncode == 0
 
 
+@pytest.mark.build_tools
 def test_build_tools_missing(tmp_path: Path):
 
     result = run_bash(f'build_tools_installed "{tmp_path}" "36.0.0"')
@@ -83,6 +88,7 @@ def test_build_tools_missing(tmp_path: Path):
     assert result.returncode != 0
 
 
+@pytest.mark.build_tools
 def test_required_build_tools_binaries_exist(
     tmp_path: Path,
 ):
@@ -98,6 +104,7 @@ def test_required_build_tools_binaries_exist(
     assert result.returncode == 0
 
 
+@pytest.mark.build_tools
 def test_missing_required_build_tools_binary(tmp_path: Path):
 
     directory = create_fake_build_tools(tmp_path)

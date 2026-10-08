@@ -1,6 +1,6 @@
-# macOS headless support — v0.4.2
+# macOS headless support — v0.4.3
 
-Android Environment v0.4.2 extends the shared headless lifecycle to macOS. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
+The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.4.3. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
 
 ## Platform behavior
 
@@ -106,4 +106,4 @@ On 2026-10-08, the user also reported both existing integration tests passing: b
 
 All five acceleration mock cases pass after correcting the macOS dispatch assertion spelling. The seven headless tests include status handling for failed ADB listing. See [testing](./testing.md) for full mock results and known helper issues.
 
-Smoke-test automation and CI remain planned for v0.4.3 and v0.4.4; see the [roadmap](../roadmap.md).
+v0.4.3 adds optional [Build Tools](./build-tools.md) without changing the headless launch flags. Smoke-test automation and CI remain future work; see the [roadmap](../roadmap.md).

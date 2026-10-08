@@ -1,6 +1,6 @@
 # Android 工具與執行環境
 
-本文件說明 Android Environment v0.4.2 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
+本文件說明 Android Environment v0.4.3 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
 
 ## 工具分工
 
@@ -89,3 +89,7 @@ Kotlin 與 Java 是 Android App 常用的開發語言。JDK 在工作站執行�
 Android Environment 負責準備 SDK、AVD 和可透過 ADB 操作的 Android 裝置。完成後，可在 Android Cookbook 使用 shell、logcat、package manager、dumpsys 等工具進行觀察與實驗。
 
 需要真實硬體行為的主題，例如 USB、感測器或 bootloader，應另外確認實體裝置的能力；本 repo 的 emulator 測試不驗證這些項目。
+
+## v0.4.3：選用 Build Tools
+
+`make install-build-tools` 安裝 `build-tools;36.0.0`，`make validate-build-tools` 檢查 Java、目錄及 `aapt2`、`apksigner`、`zipalign` 的執行權限。Runtime SDK 安裝不會自動安裝 Build Tools。應用程式仍需自己的 Gradle Wrapper 與 AGP 設定；此 repository 不執行 APK build。請見 [Build Tools](./build-tools.md) 與 [Gradle APK lifecycle](./gradle-apk-lifecycle.md)。

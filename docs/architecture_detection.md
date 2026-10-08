@@ -1,6 +1,6 @@
 # Host architecture and system images
 
-Android Environment v0.4.2 uses [platform.sh](../scripts/lib/platform.sh) to select an Android system-image ABI during SDK installation, AVD creation, and validation.
+Android Environment v0.4.3 uses [platform.sh](../scripts/lib/platform.sh) to select an Android system-image ABI during SDK installation, AVD creation, and validation.
 
 ## Host mapping
 
