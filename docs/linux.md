@@ -1,6 +1,6 @@
 # Set up Linux
 
-Prepare a Linux host for Android Environment v0.4.2. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
+Prepare a Linux host for Android Environment v0.4.3. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
 
 ## 1. Check the host
 
@@ -165,6 +165,17 @@ The expected value is `36`. Use `make emulator-stop` for the desktop workflow or
 ## Connect a physical device
 
 Enable USB debugging, connect the device, and accept the debugging authorization prompt. Use `adb devices` to check the connection. If it is absent, inspect the USB connection with `lsusb` and check the distribution's USB permissions and udev rules. A physical device is optional.
+
+## Optional APK build tools
+
+For application builds:
+
+```bash
+make install-build-tools
+make validate-build-tools
+```
+
+This installs the configured Build Tools version, defaulting to 36.0.0. It is independent of emulator operation. Run the application's Gradle Wrapper from the application repository. See [Build Tools](./build-tools.md) for validation limits.
 
 ## Troubleshoot
 

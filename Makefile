@@ -3,6 +3,8 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 .PHONY: \
 	bootstrap \
 	install-sdk \
+	install-build-tools \
+	validate-build-tools \
 	create-avd \
 	acceleration-check \
 	kvm-check \
@@ -23,6 +25,12 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
 bootstrap:
 	./scripts/bootstrap.sh
+
+install-build-tools:
+	./scripts/install_build_tools.sh
+
+validate-build-tools:
+	./scripts/validate_build_tools.sh
 
 acceleration-check:
 	./scripts/check_acceleration.sh

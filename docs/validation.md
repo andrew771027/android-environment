@@ -1,12 +1,13 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.4.2 setup:
+Use these checks at different stages of Android Environment v0.4.3 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
 | `make doctor` | Tool availability, SDK environment variable, AVD and device lists | No |
 | `make validate` | Host mapping, SDK directory, tool commands, package IDs, and AVD existence | No |
 | `make acceleration-check` | macOS emulator acceleration, or Linux x86_64/KVM checks | No |
+| `make validate-build-tools` | Java availability, versioned Build Tools directory, executable `aapt2`/`apksigner`/`zipalign` | No |
 | `make kvm-check` | Linux x86_64, KVM device access, emulator acceleration | No |
 | `make emulator-wait` | Boot completion of the first online emulator | Yes |
 | `make headless-status` | ADB visibility, readiness, and AVD identity at `emulator-5554`; fails if device listing fails | No; reports absence |
@@ -42,6 +43,15 @@ The validator prints connected devices for information. An empty device list is 
 | AVD missing | Run `make create-avd` |
 
 All commands found on `PATH` should belong to the SDK selected by `ANDROID_HOME`; validation does not enforce that relationship.
+
+## Validate optional build tools
+
+```bash
+make install-build-tools
+make validate-build-tools
+```
+
+This separate validator checks the configured Build Tools version (36.0.0 by default). Java is checked only for command availability; the three binaries are checked for executable permission, not run. `d8`, tool versions, Gradle/AGP compatibility, and actual APK builds are not validated. A successful result is an installation check, not proof that an application builds. See [Build Tools](./build-tools.md).
 
 ## Check runtime readiness
 

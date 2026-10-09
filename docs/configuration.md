@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.4.2 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.4.3 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 
@@ -22,6 +22,14 @@ make validate
 ```
 
 Except for `ANDROID_HOME`, the file assigns values unconditionally. Edit the file to change those defaults; exporting a same-named variable before running Make will not override them.
+
+## Optional Build Tools
+
+`ANDROID_BUILD_TOOLS_VERSION="36.0.0"` selects `build-tools;36.0.0` and `$ANDROID_HOME/build-tools/36.0.0`. It is assigned unconditionally; edit `config/android.env` to change it.
+
+`make install-build-tools` uses this setting directly. `config/build-packages.txt` currently records `build-tools;36.0.0` as a reference but is not read by the installer or validator. Keep that reference consistent when changing the version.
+
+An existing directory is sufficient for the installer to skip installation; it does not repair missing binaries. Run `make validate-build-tools` separately. See [Build Tools](./build-tools.md).
 
 ## Boot and shutdown settings
 

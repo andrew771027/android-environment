@@ -1,6 +1,6 @@
 # Check Linux and KVM
 
-Android Environment v0.4.2 provides a host check for **Linux x86_64**. Run it after installing the SDK Emulator package:
+Android Environment v0.4.3 provides a host check for **Linux x86_64**. Run it after installing the SDK Emulator package:
 
 ```bash
 make kvm-check
