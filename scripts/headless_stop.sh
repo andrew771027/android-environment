@@ -12,7 +12,13 @@ source "${PROJECT_ROOT}/scripts/lib/headless.sh"
 # 1. Check emulator exists
 # --------------------------------------------------
 
-if ! emulator_listed; then
+if ! devices="$(adb devices)"; then
+    echo "ERROR: Unable to query ADB devices." >&2
+    exit 1
+fi
+
+if ! awk -v target="$EMULATOR_SERIAL" \
+    '$1 == target {found=1} END {exit !found}' <<< "$devices"; then
 
     echo "Already stopped."
 

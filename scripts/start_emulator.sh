@@ -68,20 +68,27 @@ else
     )
 
     if [[ "${EMULATOR_NO_SNAPSHOT_LOAD}" == "true" ]]; then
+
         EMULATOR_ARGS+=(
+
             -no-snapshot-load
+
         )
+
     fi
 
     if [[ "${EMULATOR_NO_BOOT_ANIMATION}" == "true" ]]; then
+
         EMULATOR_ARGS+=(
+
             -no-boot-anim
+
         )
     fi
 
     # & 代表 Emulator 在背景執行，並將輸出導向 emulator.log
-    
-    
+
+
     emulator "${EMULATOR_ARGS[@]}" \
         >"${PROJECT_ROOT}/artifacts/emulator.log" \
         2>&1 &

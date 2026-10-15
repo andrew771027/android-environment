@@ -1,6 +1,6 @@
 # Desktop emulator lifecycle reference
 
-Android Environment v0.4.3's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
+Android Environment v0.4.4's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
 
 ## Device selection
 
@@ -30,11 +30,11 @@ Source `common.sh` before `emulator.sh` when calling the wait helper directly; i
 | `emulator-reset` | Kill the selected emulator, wait for disconnection without a timeout, launch configured AVD with wiped data, then wait for boot |
 | `clean` | Delete the configured AVD without stopping it first |
 
-Start and reset redirect output to `emulator.log`, overwriting it on launch. If boot waiting fails, the script returns non-zero and leaves the background process running.
+Start redirects output to `artifacts/emulator.log`; reset uses repository-root `emulator.log`. Each overwrites its log on launch. If boot waiting fails, the script returns non-zero and leaves the background process running.
 
 ## Settings
 
-Start reads `EMULATOR_NO_SNAPSHOT_LOAD` and `EMULATOR_NO_BOOT_ANIMATION`. When `true`, they add `-no-snapshot-load` and `-no-boot-anim`. Reset always uses both flags plus `-wipe-data`.
+Boot animation is disabled by default. Start reads `EMULATOR_NO_SNAPSHOT_LOAD` and `EMULATOR_NO_BOOT_ANIMATION`. When `true`, they add `-no-snapshot-load` and `-no-boot-anim`. Reset always uses both flags plus `-wipe-data`.
 
 The default boot budget is 180 seconds, with a 2-second polling interval. These values come from `EMULATOR_BOOT_TIMEOUT_SECONDS` and `EMULATOR_BOOT_POLL_INTERVAL_SECONDS`.
 

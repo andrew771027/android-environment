@@ -28,6 +28,7 @@ def test_status_reports_adb_failure(tmp_path: Path):
     assert "Unable to query ADB devices" in result.stderr
     assert "STOPPED" not in result.stdout
 
+
 # --------------------------------------------------
 # Test helper: fake adb
 # --------------------------------------------------
@@ -184,3 +185,65 @@ def test_avd_name_for_serial(tmp_path: Path):
     assert result.returncode == 0
     assert result.stderr == ""
     assert result.stdout == "cookbook_pixel_api_36\n"
+
+
+def test_stop_reports_adb_failure(tmp_path):
+    env = fake_adb(tmp_path, "1")
+
+    (tmp_path / "bin" / "adb").write_text("#!/bin/bash\nexit 1\n")
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(PROJECT_ROOT / "scripts" / "headless_stop.sh"),
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 1
+    assert "Unable to query ADB devices" in result.stderr
+    assert "Already stopped" not in result.stdout
+
+
+def test_start_does_not_launch_when_adb_listing_fails(tmp_path):
+    env = fake_adb(tmp_path, "1")
+
+    (tmp_path / "bin" / "adb").write_text("#!/bin/bash\nexit 1\n")
+
+    marker = tmp_path / "launched"
+
+    emulator = tmp_path / "bin" / "emulator"
+
+    emulator.write_text(
+        "#!/bin/bash\n"
+        'case "$1" in\n'
+        " -accel-check) exit 0 ;;\n"
+        " -list-avds) echo cookbook_pixel_api_36; exit 0 ;;\n"
+        f' *) touch "{marker}"; exit 1 ;;\n'
+        "esac\n"
+    )
+    emulator.chmod(0o755)
+    # Make the acceleration branch independent of the real host.
+    uname = tmp_path / "bin" / "uname"
+
+    uname.write_text(
+        '#!/bin/bash\ncase "$1" in -s) echo Darwin ;; *) echo x86_64 ;; esac\n'
+    )
+
+    uname.chmod(0o755)
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(PROJECT_ROOT / "scripts" / "headless_start.sh"),
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 1
+    assert "Unable to query ADB devices" in result.stderr
+    assert not marker.exists()

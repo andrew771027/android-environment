@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eup pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -61,7 +61,7 @@ fi
 
 sdk="$(
     adb -s "${SERIAL}" \
-        shell getprop ro.build.versioin.sdk |
+        shell getprop ro.build.version.sdk |
         tr -d '\r\n'
 )"
 
@@ -86,7 +86,7 @@ model="$(
         tr -d '\r\n'
 )"
 
-echo "[ OK ] Device model: ${sdk}"
+echo "[ OK ] Device model: ${model}"
 
 # --------------------------------------------------
 # 5. Package Manager

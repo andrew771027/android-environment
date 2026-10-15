@@ -1,6 +1,6 @@
-# 測試指南 — v0.4.3
+# 測試指南 — v0.4.4
 
-目前原始碼定義 28 個 mock 與 2 個整合案例。Mock 使用 pytest 呼叫 Bash helpers 或 status script，不需要真實 SDK，也不會啟動 emulator。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
+目前原始碼定義 50 個 mock 與 2 個整合案例。Mock 使用 pytest 呼叫 Bash helpers 或 status script，不需要真實 SDK，也不會啟動 emulator。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
 
 ## 準備環境
 
@@ -18,13 +18,14 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 
 | 範圍 | 指令 | 案例數 | 需求 |
 | --- | --- | --- | --- |
-| Mock | `make unit-test` | 28 | Python、pytest、Bash；不需啟動 emulator |
-| Mock 詳細輸出 | `python -m pytest -v -m "not integration" tests` | 28 | 同上 |
+| Mock | `make unit-test` | 50 | Python、pytest、Bash；不需啟動 emulator |
+| Mock 詳細輸出 | `python -m pytest -v -m "not integration" tests` | 50 | 同上 |
 | 整合 | `make integration-test` | 2 | SDK、baseline AVD、online emulator |
 | Build Tools helpers | `python -m pytest -v tests/test_build_tools.py` | 6 | 使用暫存檔，不需真實 Build Tools |
-| 全部 | `python -m pytest -v tests` | 30 | 整合案例所需環境 |
+| Smoke helpers / runner | `python -m pytest -v tests/test_smoke.py` | 19 | Fake ADB，不啟動 emulator |
+| 全部 | `python -m pytest -v tests` | 52 | 整合案例所需環境 |
 
-`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 30 個案例。
+`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 52 個案例。
 
 ## Mock 涵蓋範圍
 
@@ -32,9 +33,10 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 | --- | --- | --- |
 | [test_emulator_lib.py](../tests/test_emulator_lib.py) | 6 | 第一台 online emulator 的 serial、沒有 emulator、boot property、等待超時 |
 | [test_kvm.py](../tests/test_kvm.py) | 4 | KVM 路徑存在／缺少、acceleration 指令成功／失敗 |
-| [test_headless.py](../tests/test_headless.py) | 7 | 固定 serial、boot readiness、等待成功／超時、AVD 名稱解析、status 的 ADB-listing 失敗處理 |
-| [test_acceleration.py](../tests/test_acceleration.py) | 5 | macOS acceleration 成功／失敗、emulator 存在／缺少、macOS dispatch |
+| [test_headless.py](../tests/test_headless.py) | 9 | 固定 serial、boot readiness、等待成功／超時、AVD 名稱解析、start／status／stop 的 ADB-listing 失敗處理 |
+| [test_acceleration.py](../tests/test_acceleration.py) | 6 | macOS acceleration 成功／失敗、emulator 存在／缺少、macOS dispatch、缺少 emulator 時提前返回 |
 | [test_build_tools.py](../tests/test_build_tools.py) | 6 | Package ID、versioned directory、目錄存在／缺少、三個 required executables、缺少 zipalign |
+| [test_smoke.py](../tests/test_smoke.py) | 19 | 六項檢查、ADB 失敗但輸出有效、runner 成功／失敗 |
 
 Mock 將假的 `adb`、`emulator` 或 `uname` 放在子程序 `PATH` 最前面。KVM 路徑測試使用一般暫存檔，不是 `/dev/kvm`。Build Tools 案例使用暫存目錄與 `exit 0` executable stubs，不執行真實 binary。Timeout 案例仍會真正 `sleep`。
 
@@ -59,7 +61,23 @@ make integration-test
 
 AVD listing 與 boot 案例彼此獨立，不能證明正在執行的是設定中的 AVD，也不檢查 headless flags、固定 serial、acceleration 或 shutdown。
 
-## v0.4.3 驗證紀錄
+## v0.4.4 驗證紀錄
+
+2026-10-15，本次文件更新執行：
+
+| 指令 | 結果 |
+| --- | --- |
+| `make unit-test` | `50 passed, 2 deselected in 17.86s` |
+| `make integration-test` | `2 passed, 50 deselected in 0.20s` |
+| `make smoke` | 六項檢查全部通過，退出碼 0；SDK `36`、model `sdk_gphone64_x86_64` |
+| `make headless-status` | `READY: cookbook_pixel_api_36 (emulator-5554)`，退出碼 0 |
+| `adb -s emulator-5554 emu avd name` | `cookbook_pixel_api_36` |
+
+重驗使用使用者已啟動的 macOS Intel emulator。沙箱內 ADB 因 `Operation not permitted` 無法存取本機 server，造成初次整合與 smoke 失敗；改用沙箱外權限後，上述整合、smoke 與 status 均通過。這取代先前 AVD 空清單與 ADB 查詢失敗的驗證結論。
+
+Unit 使用 fake tools，不依賴目前執行中的 emulator；本次未為 unit 測試停止該 emulator。未執行 `headless-smoke`、完整啟停、Gradle build、APK 安裝、Linux/KVM 或 Apple Silicon 驗證。`headless-status` 通過確認 serial 的 readiness 與 AVD identity，不證明既有 emulator 使用 headless flags 啟動。
+
+## v0.4.3 歷史驗證紀錄
 
 2026-10-08，在目前 macOS Intel 工作區執行：
 
@@ -75,9 +93,11 @@ Mock 執行沒有啟動 emulator；整合測試使用既有 online emulator。�
 
 ## 已知限制
 
-[acceleration.sh](../scripts/lib/acceleration.sh) 的 `check_macos_acceleration` 仍有 `retrun 1` 拼字錯誤。Emulator 缺少時，預期提前 return 無法執行。現有 missing-emulator 案例只測 `check_emulator_exists`，未涵蓋這條 helper 路徑；suite 通過不表示該問題已修正。
+已修正 acceleration helper 的 `return`、boot 失敗測試的函式名稱與引號，以及 runner 的 `set -euo pipefail`。Smoke helpers 在正規化輸出前明確檢查 ADB 退出碼，不依賴呼叫端 shell options。新增回歸案例確認這些失敗路徑。
 
-Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner、CI、APK build verification 尚未實作。
+Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner 已實作；CI 與 APK build verification 尚未實作。
+
+Mock 已包含 smoke runner 成功／失敗，以及 headless start／stop 的 ADB-listing 失敗路徑。尚未涵蓋 Make 串接或完整真實啟停。Smoke 不驗證 AVD identity；詳見 [smoke test](./smoke-test.md)。
 
 ## 排查失敗
 

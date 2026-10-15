@@ -1,17 +1,20 @@
 import os
 import subprocess
+
+import pytest
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-LIB = ROOT / "scripts" / "lib" / "smoke.sh" 
+LIB = PROJECT_ROOT / "scripts" / "lib" / "smoke.sh"
 
 SERIAL = "emulator-5554"
+
 
 def create_fake_adb(
     tmp_path: Path,
     *,
-    adb_start: str = "device",
+    adb_state: str = "device",
     boot_completed: str = "1",
     sdk_version: str = "36",
     device_model: str = "Pixel_7",
@@ -60,7 +63,7 @@ def create_fake_adb(
         "fi\n"
         "\n"
         "exit 1\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     adb.chmod(0o755)
@@ -70,6 +73,7 @@ def create_fake_adb(
     env["PATH"] = f"{bin_dir}:{env['PATH']}"
 
     return env
+
 
 def run_bash(
     command: str,
@@ -89,15 +93,18 @@ def run_bash(
         timeout=10,
     )
 
+
 def test_smoke_adb_ready(tmp_path: Path):
 
     env = create_fake_adb(tmp_path)
 
     result = run_bash(
         f'smoke_adb_ready "{SERIAL}"',
+        env,
     )
 
     assert result.returncode == 0
+
 
 def test_smoke_adb_offline(tmp_path: Path):
 
@@ -113,6 +120,7 @@ def test_smoke_adb_offline(tmp_path: Path):
 
     assert result.returncode != 0
 
+
 def test_smoke_boot_completed(tmp_path: Path):
 
     env = create_fake_adb(tmp_path)
@@ -124,6 +132,7 @@ def test_smoke_boot_completed(tmp_path: Path):
 
     assert result.returncode == 0
 
+
 def test_smoke_boot_not_completed(tmp_path: Path):
 
     env = create_fake_adb(
@@ -132,11 +141,13 @@ def test_smoke_boot_not_completed(tmp_path: Path):
     )
 
     result = run_bash(
-        f'smoke_boot_complated "{SERIAL}',
+        f'smoke_boot_completed "{SERIAL}"',
         env,
     )
 
-    assert result.returncode != 0
+    assert result.returncode == 1
+    assert result.stderr == ""
+
 
 def test_smoke_android_sdk(tmp_path: Path):
 
@@ -152,6 +163,7 @@ def test_smoke_android_sdk(tmp_path: Path):
 
     assert result.returncode == 0
 
+
 def test_smoke_android_sdk_invalid(tmp_path: Path):
 
     env = create_fake_adb(
@@ -165,6 +177,7 @@ def test_smoke_android_sdk_invalid(tmp_path: Path):
     )
 
     assert result.returncode != 0
+
 
 def test_smoke_device_model(tmp_path: Path):
 
@@ -180,8 +193,8 @@ def test_smoke_device_model(tmp_path: Path):
 
     assert result.returncode == 0
 
-def test_smoke_device_model_missing(tmp_path: Path):
 
+def test_smoke_device_model_missing(tmp_path: Path):
 
     env = create_fake_adb(
         tmp_path,
@@ -194,6 +207,7 @@ def test_smoke_device_model_missing(tmp_path: Path):
     )
 
     assert result.returncode != 0
+
 
 def test_smoke_package_manager(tmp_path: Path):
 
@@ -209,8 +223,8 @@ def test_smoke_package_manager(tmp_path: Path):
 
     assert result.returncode == 0
 
-def test_smoke_package_manager_failure(tmp_path: Path):
 
+def test_smoke_package_manager_failure(tmp_path: Path):
 
     env = create_fake_adb(
         tmp_path,
@@ -224,6 +238,7 @@ def test_smoke_package_manager_failure(tmp_path: Path):
 
     assert result.returncode != 0
 
+
 def test_smoke_shell_command(tmp_path: Path):
 
     env = create_fake_adb(tmp_path)
@@ -235,8 +250,9 @@ def test_smoke_shell_command(tmp_path: Path):
 
     assert result.returncode == 0
 
+
 def test_smoke_shell_command_failure(tmp_path: Path):
-    
+
     env = create_fake_adb(
         tmp_path,
         shell_result="unexpected",
@@ -248,3 +264,66 @@ def test_smoke_shell_command_failure(tmp_path: Path):
     )
 
     assert result.returncode != 0
+
+
+@pytest.mark.parametrize(
+    "helper,output",
+    [
+        ("smoke_adb_ready", "device"),
+        ("smoke_boot_completed", "1"),
+        ("smoke_android_sdk", "36"),
+        ("smoke_device_model", "Pixel_7"),
+        ("smoke_shell_command", "smoke-ok"),
+    ],
+)
+def test_smoke_rejects_failed_adb_with_valid_output(tmp_path, helper, output):
+    env = create_fake_adb(tmp_path)
+
+    (tmp_path / "bin" / "adb").write_text(
+        f"#!/bin/bash\nprintf '%s\\n' '{output}'\nexit 1\n"
+    )
+
+    result = run_bash(f'{helper} "{SERIAL}"', env)
+
+    assert result.returncode == 1
+    assert result.stderr == ""
+
+
+def test_smoke_runner_passes(tmp_path):
+    env = create_fake_adb(tmp_path)
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(PROJECT_ROOT / "scripts" / "smoke_test.sh"),
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 0
+    assert "Smoke Test PASSED" in result.stdout
+
+
+def test_smoke_runner_rejects_failed_adb(tmp_path):
+
+    env = create_fake_adb(tmp_path)
+
+    (tmp_path / "bin" / "adb").write_text("#!/bin/bash\necho device\nexit 1\n")
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(PROJECT_ROOT / "scripts" / "smoke_test.sh"),
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+
+    assert result.returncode == 1
+    assert "ADB device is not ready" in result.stderr
+    assert "PASSED" not in result.stdout

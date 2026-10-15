@@ -1,8 +1,8 @@
-# Android Environment v0.4.3
+# Android Environment v0.4.4
 
 Set up an Android SDK and emulator for Android Cookbook from the command line. Android Studio is optional.
 
-Version 0.4.3 adds optional Android SDK Build Tools 36.0.0 installation and validation for application builds. The macOS headless workflow introduced in v0.4.2 remains available through the shared acceleration check. Linux headless operation still requires x86_64 and KVM. The shared headless lifecycle checks boot readiness and AVD identity before reporting ready or requesting shutdown. The desktop workflow remains available on macOS and Linux.
+Version 0.4.4 adds a smoke test for a running emulator and a combined headless-start and smoke command. Desktop start continues to disable the boot animation by default and writes its log to `artifacts/emulator.log`. Optional Build Tools and the macOS/Linux headless workflows remain available.
 
 ## SDK target
 
@@ -89,6 +89,8 @@ The SDK property should report `36`. Use `adb -s SERIAL` when more than one devi
 | `make headless-start` | Launch on port 5554; wait for boot and verify the AVD name |
 | `make headless-status` | Report state and ready AVD identity at `emulator-5554`; fail if ADB listing fails |
 | `make headless-stop` | Request shutdown after checking boot readiness and AVD identity |
+| `make smoke` | Check six runtime capabilities at `emulator-5554`; does not start or stop it |
+| `make headless-smoke` | Run headless start, then smoke; leaves the emulator running |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
 | `make unit-test` | Run tests that do not require a real SDK or emulator |
@@ -108,8 +110,7 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 make unit-test
 ```
 
-The source defines 28 mock tests and 2 integration tests. On 2026-10-08, separate runs reported `28 passed, 2 deselected` for `make unit-test` and `2 passed, 28 deselected` for `make integration-test`. Unit tests do not start or require an emulator. Integration tests require the baseline AVD and an already booted emulator:
-
+The source defines 50 mock tests and 2 integration tests. On 2026-10-15, `make unit-test` reported `50 passed, 2 deselected`. Revalidation against an already running macOS Intel emulator also passed integration tests (`2 passed, 50 deselected`) and all six checks in `make smoke`. ADB verification required access outside the sandbox. Unit tests do not start or require an emulator. Integration tests require the baseline AVD and an already booted emulator:
 ```bash
 make integration-test
 ```
@@ -127,7 +128,7 @@ The integration tests check AVD listing and boot completion, not APK builds or t
 | `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot polling wait budget |
 | `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Delay between readiness checks |
 | `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Start with `-no-snapshot-load` |
-| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Start with `-no-boot-anim` |
+| `EMULATOR_NO_BOOT_ANIMATION` | `true` | Disable the boot animation with `-no-boot-anim` |
 
 Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these assignments overwrite caller-provided values when sourced. Reset always uses both launch flags regardless of these toggles. When changing the API level, also update `config/packages.txt`; custom AVD names require updating the hardcoded integration-test expectation.
 
@@ -145,10 +146,11 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 | Run without a window | [Headless emulator](./docs/headless.md), [macOS headless](./docs/macos-headless.md) |
 | Prepare APK build tools | [Build Tools](./docs/build-tools.md) |
 | Understand Gradle and APK builds | [Gradle APK lifecycle](./docs/gradle-apk-lifecycle.md) |
+| Check emulator runtime | [Smoke test](./docs/smoke-test.md) |
 | Run tests | [Testing](./docs/testing.md) |
 | Understand the tools | [Android ecosystem](./docs/android_ecosystem.md) |
 | Understand virtualization | [Emulator, VM, and Docker](./docs/android_emulator_vm_docker.md) |
 
-Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration, a smoke-test runner, and CI orchestration are outside this release. The [roadmap](./roadmap.md) describes planned work.
+Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration and CI orchestration are outside this release. The [roadmap](./roadmap.md) describes planned work.
 
-The documentation targets v0.4.3. `pyproject.toml` also declares package version `0.4.3`.
+The documentation targets v0.4.4. `pyproject.toml` also declares package version `0.4.4`.

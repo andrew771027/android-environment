@@ -42,9 +42,12 @@ emulator -list-avds | grep -Fxq "$AVD_NAME" || {
 # 4. Prevent duplicate emulator
 # --------------------------------------------------
 
-if adb devices |
+if ! devices="$(adb devices)"; then
+    echo "ERROR: Unable to query ADB devices." >&2
+    exit 1
+fi
 
-    awk '$1 ~ /^emulator-/ {found=1} END {exit !found}'
+if awk '$1 ~ /^emulator-/ {found=1} END {exit !found}' <<< "$devices"
 
 then
 

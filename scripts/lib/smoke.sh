@@ -3,93 +3,49 @@
 # Android Environment v0.4.4
 # Emulator smoke-test helpers.
 
-smoke_adb_ready(){
-
-    local serial="${1:?serial required}"
-
-    [[ 
-        "$(
-        adb -s "${serial}" \
-            get-state \
-            2>/dev/null |
-            tr -d '\r\n'
-        )" == "device" 
-    ]]
-
+smoke_adb_output() {
+    
+    local output
+    
+    output="$(adb "$@" 2>/dev/null)" || return 1
+    
+    printf '%s' "$output" | tr -d '\r\n'
 }
 
-smoke_boot_completed(){
-
-    local serial="${1:?serial required}"
-
-    [[  
-        "$(
-        adb -s "${serial}" \
-            shell getprop sys.boot_completed \
-            2>/dev/null |
-            tr -d '\r\n'
-        )" == "1"
-    ]]
-
+smoke_adb_ready() {
+    local serial="${1:?serial required}" state
+    
+    state="$(smoke_adb_output -s "$serial" get-state)" || return 1
+    
+    [[ "$state" == "device" ]]
 }
 
-smoke_android_sdk(){
-
-    local serial="${1:?serial required}"
-
-    local sdk
-
-    sdk="$(
-        adb -s "${serial}" \
-            shell getprop ro.build.version.sdk \
-            2>/dev/null |
-            tr -d '\r\n'
-    )"
-
-    [[ "${sdk}" =~ ^[0-9]+$ ]]
-
+smoke_boot_completed() {
+    local serial="${1:?serial required}" boot
+    boot="$(smoke_adb_output -s "$serial" shell getprop sys.boot_completed)" || return 1
+    
+    [[ "$boot" == "1" ]]
 }
 
-smoke_device_model(){
-
-    local serial="${1:?serial required}"
-
-    local model
-
-    model="$(
-        adb -s "${serial}" \
-            shell getprop ro.product.model \
-            2>/dev/null |
-            tr -d '\r\n'
-        )"
-
-    [[ -n "${model}" ]]
-
+smoke_android_sdk() {
+    local serial="${1:?serial required}" sdk
+    sdk="$(smoke_adb_output -s "$serial" shell getprop ro.build.version.sdk)" || return 1
+    [[ "$sdk" =~ ^[0-9]+$ ]]
 }
 
-smoke_package_manager(){
-
-    local serial="${1:?serial required}"
-
-    adb -s "${serial}" \
-        shell pm list packages \
-        >/dev/null 2>&1
-
+smoke_device_model() {
+    local serial="${1:?serial required}" model
+    model="$(smoke_adb_output -s "$serial" shell getprop ro.product.model)" || return 1
+    [[ -n "$model" ]]
 }
 
-smoke_shell_command(){
-
+smoke_package_manager() {
     local serial="${1:?serial required}"
+    adb -s "$serial" shell pm list packages >/dev/null 2>&1
+}
 
-    local result
-
-    result="$(
-        adb -s "${serial}" \
-            shell echo smoke-ok \
-            2>/dev/null |
-            tr -d '\r\n'
-    )"
-
-    [[ "${result}" == "smoke-ok" ]]
-
+smoke_shell_command() {
+    local serial="${1:?serial required}" result
+    result="$(smoke_adb_output -s "$serial" shell echo smoke-ok)" || return 1
+    [[ "$result" == "smoke-ok" ]]
 }
