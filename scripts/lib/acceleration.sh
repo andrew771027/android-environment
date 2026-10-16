@@ -12,7 +12,7 @@ check_emulator_exists(){
 
 check_macos_acceleration(){
 
-    check_emulator_exists || retrun 1
+    check_emulator_exists || return 1
 
     emulator -accel-check >/dev/null 2>&1
 }

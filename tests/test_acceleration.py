@@ -184,3 +184,20 @@ def test_macos_dispatch(tmp_path: Path):
     assert result.returncode == 0
 
     assert "macOS Emulator Acceleration Check PASSED" in result.stdout
+
+
+def test_macos_acceleration_returns_early_without_emulator(tmp_path):
+    result = subprocess.run(
+        [
+            "/bin/bash",
+            "-c",
+            f'source "{LIB}"; check_emulator_exists() {{ return 1; }}; '
+            "emulator() { echo UNEXPECTED; return 0; }; check_macos_acceleration",
+        ],
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == ""

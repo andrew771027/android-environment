@@ -1,6 +1,6 @@
 # Run a headless emulator
 
-Android Environment v0.4.3 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
+Android Environment v0.4.4 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
 
 ## Before you start
 
@@ -13,7 +13,7 @@ make acceleration-check
 adb devices
 ```
 
-The configured AVD must exist, port 5554 must be available, and ADB must list no `emulator-*` entries. Start rejects existing entries even if they are offline. Physical devices do not trigger this check.
+The configured AVD must exist, port 5554 must be available, and ADB must list no `emulator-*` entries. Start rejects existing entries even if they are offline. Physical devices do not trigger this check. A failed ADB listing aborts startup before launch.
 
 The scripts use **port 5554** and **serial `emulator-5554`**. Changing `EMULATOR_PORT` or `EMULATOR_SERIAL` in `config/android.env` does not change this behavior. See [configuration](./configuration.md).
 
@@ -76,7 +76,7 @@ A successful status command does not necessarily mean Android is ready. ADB visi
 make headless-stop
 ```
 
-If the serial is absent from the ADB list, the command reports `Already stopped.` Otherwise, it requires boot readiness and the configured AVD name before sending `adb -s emulator-5554 emu kill`.
+If ADB listing fails, stop exits non-zero without reporting that the emulator is stopped. If the serial is absent from a successful ADB list, the command reports `Already stopped.` Otherwise, it requires boot readiness and the configured AVD name before sending `adb -s emulator-5554 emu kill`.
 
 The command prints `Stop requested` and exits without waiting for disconnection. Check again with:
 
@@ -111,4 +111,4 @@ adb -s emulator-5554 emu avd name
 
 The entry points are [headless_start.sh](../scripts/headless_start.sh), [headless_status.sh](../scripts/headless_status.sh), and [headless_stop.sh](../scripts/headless_stop.sh). They share [headless.sh](../scripts/lib/headless.sh).
 
-Seven [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and the status entry point's ADB-listing failure. They do not exercise real acceleration or the complete start/stop entry points. There is no smoke-test runner, automatic timeout cleanup, or CI workflow in this release. See [testing](./testing.md) for the recorded checks.
+Nine [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and ADB-listing failure in the start, status, and stop entry points. They do not exercise real acceleration or the complete start/stop entry points. Use `make smoke` after startup or `make headless-smoke` to start and check runtime capabilities. Neither command stops the emulator. See [smoke test](./smoke-test.md). Automatic timeout cleanup and CI remain unimplemented. See [testing](./testing.md) for the recorded checks.

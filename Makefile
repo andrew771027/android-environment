@@ -9,11 +9,13 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	acceleration-check \
 	kvm-check \
 	unit-test \
+	smoke \
 	emulator-start \
 	emulator-wait \
 	emulator-status \
 	emulator-stop \
 	emulator-reset \
+	headless-smoke \
 	headless-start \
 	headless-status \
 	headless-stop \
@@ -44,6 +46,9 @@ install-sdk:
 create-avd:
 	./scripts/create_avd.sh
 
+smoke:
+	./scripts/smoke_test.sh
+
 emulator-start:
 	./scripts/start_emulator.sh
 
@@ -58,6 +63,10 @@ emulator-stop:
 
 emulator-reset:
 	./scripts/reset_emulator.sh
+
+headless-smoke:
+	./scripts/headless_start.sh
+	./scripts/smoke_test.sh
 
 headless-start:
 	./scripts/headless_start.sh

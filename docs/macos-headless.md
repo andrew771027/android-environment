@@ -1,6 +1,6 @@
-# macOS headless support — v0.4.3
+# macOS headless support — v0.4.4
 
-The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.4.3. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
+The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.4.4. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
 
 ## Platform behavior
 
@@ -104,6 +104,8 @@ On 2026-10-08, a macOS Intel launch created the baseline AVD and reached `READY`
 
 On 2026-10-08, the user also reported both existing integration tests passing: baseline AVD listing and boot completion of the first online emulator. This result does not identify the launch mode, verify the running AVD identity, or cover shutdown. Integration output and duration were not supplied.
 
-All five acceleration mock cases pass after correcting the macOS dispatch assertion spelling. The seven headless tests include status handling for failed ADB listing. See [testing](./testing.md) for full mock results and known helper issues.
+All six acceleration mock cases pass, including early return when the emulator is missing. The nine headless tests include start, status, and stop handling for failed ADB listing. See [testing](./testing.md) for full mock results and known helper issues.
 
-v0.4.3 adds optional [Build Tools](./build-tools.md) without changing the headless launch flags. Smoke-test automation and CI remain future work; see the [roadmap](../roadmap.md).
+On 2026-10-15, revalidation against an existing macOS Intel emulator passed both integration tests, all six real smoke checks, and headless status with AVD `cookbook_pixel_api_36` at `emulator-5554`. This did not exercise startup, shutdown, or establish the existing process's launch flags. ADB access required running outside the sandbox.
+
+v0.4.4 adds [smoke testing](./smoke-test.md): use `make smoke` for an existing emulator or `make headless-smoke` to start and check it. Headless flags remain unchanged. CI remains future work; see the [roadmap](../roadmap.md).

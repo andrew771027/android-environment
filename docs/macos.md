@@ -1,6 +1,6 @@
 # Set up macOS
 
-Prepare a macOS host for Android Environment v0.4.3. The SDK target is Android 16 / API 36. Android Studio is optional.
+Prepare a macOS host for Android Environment v0.4.4. The SDK target is Android 16 / API 36. Android Studio is optional.
 
 ## 1. Check the architecture
 
