@@ -1,0 +1,62 @@
+name: Android Environment CI
+
+on:
+  push:
+    branches: 
+      - main
+    
+  pull_request:
+
+  workflow_dispatch:
+
+
+jobs:
+
+  test:
+
+    name: Unit and Shell Tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: action/checkout@v7
+      
+      - name: Setup Python
+        uses: action/setup-python@v7
+        with:
+          python-version: "3.13"
+      
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+        
+      - name: Prepare artifacts directory
+        run: |
+          mkdir -p artifacts
+        
+      - name: Check shell syntax
+        run: |
+          bash -n scripts/headless_start.sh
+          bash -n scripts/headless_status.sh
+          bash -n scripts/headless_stop.sh
+          bash -n scripts/smoke_test.sh
+          bash -n scripts/ci_headless_smoke.sh
+          bash -n scripts/lib/process.sh
+        
+      - name: Run tests
+        run: |
+          pytest -v \
+            --junitxml==artifacts/pytest.xml
+      
+      - name: Upload CI artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-environment-ci-${{ github.run_id }}
+          path: |
+            artifacts/
+          if-no-filew-found: warn
+          retention-days: 7
