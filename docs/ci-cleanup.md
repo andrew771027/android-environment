@@ -93,11 +93,11 @@ Failed cleanup logs `Retained PID file` with its path for inspection. That tempo
 
 ## GitHub Actions status
 
-The repository contains a draft at [.github/workflow/ci.yml](../.github/workflow/ci.yml). It is not an active workflow: the directory is `workflow`, rather than `workflows`.
+The unit workflow is [.github/workflows/ci.yml](../.github/workflows/ci.yml). It triggers on pushes to all branches, pull requests, and manual dispatch after the workflow is available to GitHub.
 
-The draft describes checkout, Python setup, shell syntax checks, pytest, and artifact upload, but it still needs correction and validation. It selects Python 3.13 while the project declares Python >= 3.14, invokes pytest without excluding integration tests, has `--junitxml==artifacts/pytest.xml`, and misspells `if-no-files-found` as `if-no-filew-found`. Action references also need validation before activation.
+It uses Python 3.14, installs the project's pytest version range, checks every Shell script under `scripts/`, and runs only tests marked `not integration`. The JUnit report is written to `artifacts/pytest.xml`. An `always()` artifact step attempts upload even after a failed test, with seven-day retention. The job does not install an SDK or start an emulator.
 
-Version 0.4.5 therefore provides local CI orchestration, not a verified hosted GitHub Actions job. A hosted unit job should run without an emulator; real emulator CI requires separate SDK provisioning and an acceleration-capable runner. See the [roadmap](../roadmap.md).
+The configuration has been checked locally; a successful hosted run must be verified after pushing it. This branch defines only the `test` job. A separate `headless` job seen in another branch or an older run belongs to that run's workflow and commit. Real emulator CI requires separate SDK provisioning and an acceleration-capable runner. See the [roadmap](../roadmap.md).
 
 ## Test coverage
 

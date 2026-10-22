@@ -116,7 +116,7 @@ Mock 執行沒有啟動 emulator；整合測試使用既有 online emulator。�
 
 已修正 acceleration helper 的 `return`、boot 失敗測試的函式名稱與引號，以及 runner 的 `set -euo pipefail`。Smoke helpers 在正規化輸出前明確檢查 ADB 退出碼，不依賴呼叫端 shell options。新增回歸案例確認這些失敗路徑。
 
-Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner 與本機 CI wrapper 已實作；hosted CI 草稿尚未啟用，APK build verification 尚未實作。
+Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner 與本機 CI wrapper 已實作；`.github/workflows/ci.yml` 已設定 Shell checks、unit selection 與 JUnit artifact upload；推送後的 hosted 執行尚待驗證。APK build verification 尚未實作。
 
 Mock 已包含 smoke runner 成功／失敗，以及 headless start／stop 的 ADB-listing 失敗路徑。CI wrapper 的測試使用替代 start／stop／smoke scripts，沒有跑完整真實 Android 啟停，也未涵蓋 signal delivery、所有 PID reuse 與實際 emulator command-line 變化。Smoke 不驗證 AVD identity；詳見 [smoke test](./smoke-test.md)。
 

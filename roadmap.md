@@ -13,7 +13,7 @@
 | v0.4.3 | 選用 Build Tools 安裝／驗證、integration-test Make target | 已實作 |
 | v0.4.4 | 六項 runtime smoke checks、headless-smoke | 已實作；不自動停止 emulator |
 | **v0.4.5** | **本機 CI runner、PID tracking、owned cleanup、退出碼處理** | **目前版本；70 個單元案例、2 個整合案例** |
-| v0.4.6 | 修正並啟用 hosted CI、分離 unit 與 emulator jobs、artifact reports | 計畫中；現有 Actions 設定仍是草稿 |
+| v0.4.6 | 修正並啟用 hosted CI、分離 unit 與 emulator jobs、artifact reports | unit workflow 已設定；hosted 執行與 emulator job 尚待驗證 |
 | v0.5 | Physical-device USB detection、ADB authorization、device info、fastboot detection | 計畫中；目前只有工具與手動指南 |
 | v1.0 | 可重現 Mac／Linux workstation、emulator／physical Pixel、health check、CI verification | 長期目標 |
 
@@ -34,7 +34,7 @@
 
 後續工作包括：
 
-- 修正 `.github/workflow/ci.yml` 的目錄、Python 版本、測試選擇與 artifact 設定，驗證 Actions references 後啟用 hosted CI。
+- `.github/workflows/ci.yml` 已修正目錄、Python 版本、Action references、unit selection 與 artifact 設定；推送後確認 hosted unit 結果，再規劃獨立 emulator job。
 - 在 macOS Intel、Apple Silicon 與 Linux/KVM 驗證真實 start／smoke／stop、開機失敗與 signal 路徑。
 - 補強程序身分與 PID reuse 處理、descendant supervision，以及 ADB calls 的 timeout。
 - 修復部分 Build Tools 安裝、驗證實際工具執行，加入 Gradle build 與 APK 安裝測試。
