@@ -1,11 +1,13 @@
 import subprocess
 import sys
 import time
+import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 LIB = ROOT / "scripts" / "lib" / "process.sh"
+
 
 def run_bash(command: str) -> subprocess.CompletedProcess[str]:
 
@@ -13,7 +15,7 @@ def run_bash(command: str) -> subprocess.CompletedProcess[str]:
         [
             "bash",
             "-c",
-            f'source "{LIB}; command',
+            f'source "{LIB}"; {command}',
         ],
         text=True,
         capture_output=True,
@@ -21,43 +23,33 @@ def run_bash(command: str) -> subprocess.CompletedProcess[str]:
         timeout=10,
     )
 
+
 def test_process_is_alive():
 
-    process = subprocess.Popen(
-        [
-            "sleep",
-            "30"
-        ]
-    )
+    process = subprocess.Popen(["sleep", "30"])
 
     try:
 
-        result = run_bash(
-            f"process_is_alive {process.pid}"
-        )
+        result = run_bash(f"process_is_alive {process.pid}")
 
         assert result.returncode == 0
-    
+
     finally:
 
         process.terminate()
         process.wait(timeout=5)
 
+
 def test_process_is_not_alive():
 
-    process = subprocess.Popen(
-        [
-            "true"
-        ]
-    )
+    process = subprocess.Popen(["true"])
 
     process.wait(timeout=5)
 
-    result = run_bash(
-        f"process_is_alive {process.pid}"
-    )
+    result = run_bash(f"process_is_alive {process.pid}")
 
     assert result.returncode != 0
+
 
 def test_read_pid_file(tmp_path: Path):
 
@@ -68,13 +60,12 @@ def test_read_pid_file(tmp_path: Path):
         encoding="utf-8",
     )
 
-    result = run_bash(
-        f'read_pid_file "{pid_file}'
-    )
+    result = run_bash(f'read_pid_file "{pid_file}"')
 
     assert result.returncode == 0
 
     assert result.stdout.strip() == "12345"
+
 
 def test_invalid_pid_file(tmp_path: Path):
 
@@ -85,30 +76,23 @@ def test_invalid_pid_file(tmp_path: Path):
         encoding="utf-8",
     )
 
-    result = run_bash(
-        f'read_pid_file "{pid_file}"'
-    )
+    result = run_bash(f'read_pid_file "{pid_file}"')
 
     assert result.returncode != 0
 
+
 def test_terminate_process_with_term():
 
-    process = subprocess.Popen(
-        [
-            "sleep",
-            "30"
-        ]
-    )
+    process = subprocess.Popen(["sleep", "30"])
 
-    result = run_bash(
-        f"terminate_process {process.pid} 3"
-    )
+    result = run_bash(f"terminate_process {process.pid} 3")
 
     process.wait(timeout=5)
 
     assert result.returncode == 0
 
     assert process.poll() is not None
+
 
 def test_terminate_process_fails_back_to_kill():
 
@@ -126,15 +110,13 @@ def test_terminate_process_fails_back_to_kill():
 
     time.sleep(0.2)
 
-    result = run_bash(
-        f"terminate_process {process.pid} 1"
-    )
+    result = run_bash(f"terminate_process {process.pid} 1")
 
     process.wait(timeout=5)
 
     assert result.returncode == 0
 
-    assert result.poll() is not None
+    assert process.poll() is not None
 
     assert "Sending KILL" in result.stdout
 
@@ -161,6 +143,34 @@ def test_exit_trap_runs_cleanup(tmp_path: Path):
 
     assert maker.exists()
 
-    assert maker.read_text(
-        encoding="utf-8"
-    ).strip() == "cleanup"
+    assert maker.read_text(encoding="utf-8").strip() == "cleanup"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "0",
+        "1",
+        "01",
+        "-12",
+        "abc",
+        "",
+    ],
+)
+def test_reject_unsafe_pid(tmp_path, value):
+    pid_file = tmp_path / "invalid.pid"
+    pid_file.write_text(value + "\n")
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            'source "$1"; read_pid_file "$2"',
+            "bash",
+            str(ROOT / "scripts/lib/process.sh"),
+            str(pid_file),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode != 0

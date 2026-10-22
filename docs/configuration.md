@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.4.4 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.4.5 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 
@@ -41,12 +41,18 @@ An existing directory is sufficient for the installer to skip installation; it d
 | `EMULATOR_NO_BOOT_ANIMATION` | `true` | Adds `-no-boot-anim` on start | Not used; flag is always enabled |
 | `EMULATOR_PORT` | `5554` | Not used | Not read; launcher hardcodes port 5554 |
 | `EMULATOR_SERIAL` | `emulator-5554` | Not used | Library overwrites it with `emulator-5554` |
-| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Not used; stop hardcodes 30 seconds | Not used; stop does not wait |
+| `EMULATOR_STOP_TIMEOUT_SECONDS` | `30` | Not used; stop hardcodes 30 seconds | Not used; stop uses a fixed 5-second TERM grace period |
 | `EMULATOR_POLL_INTERVAL_SECONDS` | `2` | Not used | Not used |
 
 Desktop reset always adds `-wipe-data -no-snapshot-load -no-boot-anim`. Its wait for the previous emulator to disconnect has no timeout.
 
 Polling budgets count sleep time. They do not bound individual ADB calls or total elapsed time.
+
+## Runtime PID files
+
+`HEADLESS_PID_FILE` is an optional environment override shared by headless start and stop. When unset or empty, both use `artifacts/headless-emulator.pid`. A custom path must have an existing, writable parent directory.
+
+The CI wrapper creates a private temporary directory with `mktemp`, using `${TMPDIR:-/tmp}`, then exports `HEADLESS_PID_FILE` for its child scripts. This separates CI ownership from a previous manual session. Successful cleanup removes that directory; failed cleanup retains it and prints the PID path. The emulator log remains at `artifacts/headless-emulator.log` and is overwritten on launch. See [CI and cleanup](./ci-cleanup.md).
 
 ## SDK packages
 

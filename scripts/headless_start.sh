@@ -66,7 +66,7 @@ mkdir -p "${PROJECT_ROOT}/artifacts"
 
 log="${PROJECT_ROOT}/artifacts/headless-emulator.log"
 
-PID_FILE="${PROJECT_ROOT}/artifacts/headless-emulator.pid"
+PID_FILE="${HEADLESS_PID_FILE:-${PROJECT_ROOT}/artifacts/headless-emulator.pid}"
 
 echo "Starting $AVD_NAME (headless)"
 echo "Log: $log"

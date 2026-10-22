@@ -1,6 +1,6 @@
-# macOS headless support — v0.4.4
+# macOS headless support — v0.4.5
 
-The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.4.4. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
+The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.4.5. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
 
 ## Platform behavior
 
@@ -56,7 +56,7 @@ Startup waits for ADB state `device` and `sys.boot_completed=1`, then verifies t
 READY: cookbook_pixel_api_36 (emulator-5554)
 ```
 
-The default polling budget is 180 seconds; individual ADB call durations are additional. A timeout or identity mismatch exits non-zero and does not automatically stop the emulator.
+The default polling budget is 180 seconds; individual ADB call durations are additional. A timeout or identity mismatch exits non-zero. Direct startup leaves the process running; `make ci-headless-smoke` attempts cleanup of its own process.
 
 ## Status and shutdown
 
@@ -74,7 +74,7 @@ make headless-stop
 make headless-status
 ```
 
-Stop checks readiness and AVD identity before sending `emu kill`. It does not wait for disconnection and refuses to stop an unready or differently named device. See [headless operation](./headless.md) for all status outputs and shutdown limitations.
+Stop checks readiness and AVD identity before sending `emu kill`. It waits two seconds, then uses the recorded PID for TERM/KILL fallback. It does not poll ADB until disconnection and refuses to stop an unready or differently named device through the manual path. See [headless operation](./headless.md) for all status outputs and shutdown limitations.
 
 ## Troubleshooting
 
@@ -108,4 +108,4 @@ All six acceleration mock cases pass, including early return when the emulator i
 
 On 2026-10-15, revalidation against an existing macOS Intel emulator passed both integration tests, all six real smoke checks, and headless status with AVD `cookbook_pixel_api_36` at `emulator-5554`. This did not exercise startup, shutdown, or establish the existing process's launch flags. ADB access required running outside the sandbox.
 
-v0.4.4 adds [smoke testing](./smoke-test.md): use `make smoke` for an existing emulator or `make headless-smoke` to start and check it. Headless flags remain unchanged. CI remains future work; see the [roadmap](../roadmap.md).
+v0.4.4 adds [smoke testing](./smoke-test.md): use `make smoke` for an existing emulator or `make headless-smoke` to start and check it. Headless flags remain unchanged. Version 0.4.5 adds `make ci-headless-smoke` with cleanup limited to that run’s PID. See [CI and cleanup](./ci-cleanup.md) and the [roadmap](../roadmap.md).

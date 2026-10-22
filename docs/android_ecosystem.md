@@ -1,6 +1,6 @@
 # Android 工具與執行環境
 
-本文件說明 Android Environment v0.4.4 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
+本文件說明 Android Environment v0.4.5 使用的工具，以及它們和 Android App 開發的關係。實際安裝步驟請見 [setup](./setup.md)。
 
 ## 工具分工
 

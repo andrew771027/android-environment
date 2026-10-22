@@ -1,6 +1,6 @@
 # Set up Android Environment
 
-This guide covers Android Environment v0.4.4. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
+This guide covers Android Environment v0.4.5. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
 ## SDK target
 
@@ -31,7 +31,7 @@ Use `sdkmanager --list_installed` to record installed revisions. Use `cat "$ANDR
 
 As checked on 2026-09-23, Google marks [`sdkmanager` as deprecated](https://developer.android.com/tools/sdkmanager) and recommends Android CLI's `android sdk` command. This refers to the management tool, not the Android SDK as a whole.
 
-This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.4's scope.
+This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.5's scope.
 
 ## 1. Install host prerequisites
 

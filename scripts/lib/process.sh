@@ -7,20 +7,27 @@ process_is_alive(){
 
     local pid="${1:?pid required}"
 
-    kill -0 "${pid}" 2>/dev/null
+    kill -0 "${pid}" 2>/dev/null || return 1
+
+    local state
+    state="$(ps -p "${pid}" -o stat= 2>/dev/null)" || {
+        kill -0 "${pid}" 2>/dev/null
+        return $?
+    }
+    [[ -n "${state}" && "${state}" != *Z* ]]
 }
 
 read_pid_file(){
 
     local pid_file="${1:?pid file required}"
 
-    [[ -f "{pid_file}" ]] || return 1
+    [[ -f "${pid_file}" ]] || return 1
 
     local pid
 
-    pid="$(cat "${pid_file}")"
+    pid="$(cat "${pid_file}")" || return 1
 
-    [[ "${pid}" =~ ^[0-9]+$ ]] || return 1
+    [[ "${pid}" =~ ^[1-9][0-9]*$ && "${pid}" != 1 ]] || return 1
 
     echo "${pid}"
 
@@ -63,6 +70,12 @@ terminate_process(){
         echo "[INFO] Sending KILL to PID ${pid}"
 
         kill -KILL "${pid}" 2>/dev/null || true
+
+        # Signal delivery is asynchronous; allow the process to exit.
+        for ((elapsed=0; elapsed<5; elapsed++)); do
+            process_is_alive "${pid}" || break
+            sleep 1
+        done
     
     fi
 
