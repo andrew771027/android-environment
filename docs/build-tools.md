@@ -1,4 +1,4 @@
-# Optional Build Tools — v0.4.4
+# Optional Build Tools — v0.4.5
 
 Android Environment v0.4.3 introduced a separate installation and validation path for Android SDK Build Tools. Emulator operation can continue without this package. An application repository uses its own Gradle Wrapper and Android Gradle Plugin (AGP) to build APKs.
 

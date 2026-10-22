@@ -62,9 +62,11 @@ fi
 # 5. Prepare log directory
 # --------------------------------------------------
 
-mkdir -p "$PROJECT_ROOT/artifacts"
+mkdir -p "${PROJECT_ROOT}/artifacts"
 
-log="$PROJECT_ROOT/artifacts/headless-emulator.log"
+log="${PROJECT_ROOT}/artifacts/headless-emulator.log"
+
+PID_FILE="${HEADLESS_PID_FILE:-${PROJECT_ROOT}/artifacts/headless-emulator.pid}"
 
 echo "Starting $AVD_NAME (headless)"
 echo "Log: $log"
@@ -83,11 +85,14 @@ nohup emulator \
     -no-boot-anim \
     -no-snapshot \
     >"$log" 2>&1 </dev/null & 
-    
+
 #取得剛剛啟動的背景程序 PID
 pid=$!
 
+printf '%s\n' "${pid}" > "${PID_FILE}"
+
 echo "Launcher PID: $pid"
+echo "PID file: ${PID_FILE}"
 
 # --------------------------------------------------
 # 7. Wait for boot

@@ -1,6 +1,6 @@
 # Run a headless emulator
 
-Android Environment v0.4.4 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
+Android Environment v0.4.5 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
 
 ## Before you start
 
@@ -37,7 +37,7 @@ emulator \
 
 The AVD name comes from configuration. The remaining flags are fixed in the script. The launcher does not specify `-gpu`; graphics selection is left to the emulator. Linux still requires KVM.
 
-Output goes to `artifacts/headless-emulator.log`, which is overwritten on each launch. Standard input is redirected from `/dev/null`. The script prints the launcher PID but does not store a PID file or supervise the process. Run it from your terminal for a persistent local session; task runners may clean up background processes even when `nohup` is used.
+Output goes to `artifacts/headless-emulator.log`, which is overwritten on each launch. Standard input is redirected from `/dev/null`. The script prints the launcher PID and stores it in `artifacts/headless-emulator.pid`, or the path supplied through `HEADLESS_PID_FILE`. It does not supervise or restart the process. Run it from your terminal for a persistent local session; task runners may clean up background processes even when `nohup` is used.
 
 Start waits for both of these conditions:
 
@@ -52,7 +52,7 @@ READY: cookbook_pixel_api_36 (emulator-5554)
 
 The default boot wait is 180 polling seconds, with a check every second and one final check at the deadline. ADB command duration is additional; this is not a strict wall-clock timeout.
 
-If boot times out or the AVD name does not match, start exits non-zero. It leaves the emulator process running for inspection.
+If boot times out or the AVD name does not match, start exits non-zero. When invoked directly, it leaves the emulator process running for inspection. `make ci-headless-smoke` instead attempts to clean up the process started by that run.
 
 ## Check status
 
@@ -78,14 +78,14 @@ make headless-stop
 
 If ADB listing fails, stop exits non-zero without reporting that the emulator is stopped. If the serial is absent from a successful ADB list, the command reports `Already stopped.` Otherwise, it requires boot readiness and the configured AVD name before sending `adb -s emulator-5554 emu kill`.
 
-The command prints `Stop requested` and exits without waiting for disconnection. Check again with:
+After requesting ADB shutdown, the command waits two seconds and checks the recorded launcher PID. If that process remains alive, it sends TERM, waits up to five polling seconds, then uses KILL and waits up to five more polling seconds. It removes the PID file on successful cleanup. This checks the tracked process; it does not poll ADB until disconnection. Check again with:
 
 ```bash
 make headless-status
 adb devices
 ```
 
-It refuses to stop an offline, booting, or differently named AVD. There is no forced-kill fallback. For a failed start, inspect the log and identify the process before handling it manually.
+It refuses to stop an offline, booting, or differently named AVD. The manual command reaches its PID fallback only after readiness and AVD validation. If the target is absent from ADB, it returns early; it does not clean up an unlisted process or remove the PID file. For a failed manual start, inspect the log and identify the process before handling it manually.
 
 ## Troubleshoot
 
@@ -111,4 +111,4 @@ adb -s emulator-5554 emu avd name
 
 The entry points are [headless_start.sh](../scripts/headless_start.sh), [headless_status.sh](../scripts/headless_status.sh), and [headless_stop.sh](../scripts/headless_stop.sh). They share [headless.sh](../scripts/lib/headless.sh).
 
-Nine [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and ADB-listing failure in the start, status, and stop entry points. They do not exercise real acceleration or the complete start/stop entry points. Use `make smoke` after startup or `make headless-smoke` to start and check runtime capabilities. Neither command stops the emulator. See [smoke test](./smoke-test.md). Automatic timeout cleanup and CI remain unimplemented. See [testing](./testing.md) for the recorded checks.
+Nine [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and ADB-listing failure in the start, status, and stop entry points. They do not exercise real acceleration or the complete start/stop entry points. Use `make smoke` after startup or `make headless-smoke` to start and check runtime capabilities. Neither command stops the emulator. See [smoke test](./smoke-test.md). Version 0.4.5 adds `make ci-headless-smoke` with a private PID file and `headless_stop.sh --owned` cleanup. This path validates the process command and can stop its tracked process even before Android becomes ready. It uses TERM/KILL directly rather than ADB shutdown. See [CI and cleanup](./ci-cleanup.md). See [testing](./testing.md) for the recorded checks.

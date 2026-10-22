@@ -1,6 +1,6 @@
 # Android Emulator, virtual machines, and containers
 
-Android Environment v0.4.4 runs Android Emulator as a host process. It includes desktop lifecycle commands and a headless workflow for macOS and Linux x86_64. It does not include a Docker image, container launcher, or CI workflow.
+Android Environment v0.4.5 runs Android Emulator as a host process. It includes desktop lifecycle commands and a headless workflow for macOS and Linux x86_64. It includes a local `make ci-headless-smoke` runner, but no Docker image or container launcher. The GitHub Actions unit workflow does not provision an emulator; see [CI and cleanup](./ci-cleanup.md).
 
 ## What each layer provides
 

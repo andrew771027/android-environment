@@ -1,8 +1,8 @@
-# Android Environment v0.4.4
+# Android Environment v0.4.5
 
 Set up an Android SDK and emulator for Android Cookbook from the command line. Android Studio is optional.
 
-Version 0.4.4 adds a smoke test for a running emulator and a combined headless-start and smoke command. Desktop start continues to disable the boot animation by default and writes its log to `artifacts/emulator.log`. Optional Build Tools and the macOS/Linux headless workflows remain available.
+Version 0.4.5 adds a headless CI runner with PID tracking and best-effort cleanup. It starts an isolated emulator, runs the smoke test, and cleans up its own process on exit. Existing emulators are preserved when startup is refused. Desktop, headless, and optional Build Tools commands remain available.
 
 ## SDK target
 
@@ -88,9 +88,10 @@ The SDK property should report `36`. Use `adb -s SERIAL` when more than one devi
 | `make emulator-reset` | Wipe the configured AVD's user data and start it |
 | `make headless-start` | Launch on port 5554; wait for boot and verify the AVD name |
 | `make headless-status` | Report state and ready AVD identity at `emulator-5554`; fail if ADB listing fails |
-| `make headless-stop` | Request shutdown after checking boot readiness and AVD identity |
+| `make headless-stop` | Check readiness and AVD identity; request ADB shutdown, then use the recorded PID as fallback |
 | `make smoke` | Check six runtime capabilities at `emulator-5554`; does not start or stop it |
 | `make headless-smoke` | Run headless start, then smoke; leaves the emulator running |
+| `make ci-headless-smoke` | Start, run smoke, and clean up this run’s emulator; refuses existing emulators |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
 | `make unit-test` | Run tests that do not require a real SDK or emulator |
@@ -98,6 +99,14 @@ The SDK property should report `36`. Use `adb -s SERIAL` when more than one devi
 | `make clean` | Delete the configured AVD; does not stop it first |
 
 Desktop lifecycle commands select the first online emulator without checking its AVD name. Use them with one emulator at a time. `emulator-reset` removes installed apps and user settings; `clean` deletes the AVD.
+
+For a complete start, smoke, and cleanup cycle, begin with no emulator running:
+
+```bash
+make ci-headless-smoke
+```
+
+Use `make smoke` to test an existing emulator. If CI startup reports `An emulator already exists`, it exits 1 and skips stopping that emulator. Cleanup success does not erase the startup failure. See [CI and cleanup](./docs/ci-cleanup.md) for exit codes and PID files.
 
 ## Tests
 
@@ -110,12 +119,13 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 make unit-test
 ```
 
-The source defines 50 mock tests and 2 integration tests. On 2026-10-15, `make unit-test` reported `50 passed, 2 deselected`. Revalidation against an already running macOS Intel emulator also passed integration tests (`2 passed, 50 deselected`) and all six checks in `make smoke`. ADB verification required access outside the sandbox. Unit tests do not start or require an emulator. Integration tests require the baseline AVD and an already booted emulator:
+The source defines 70 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
+
 ```bash
 make integration-test
 ```
 
-The integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle. See [testing](./docs/testing.md) for results and coverage limits.
+On 2026-10-22, `make unit-test` reported `70 passed, 2 deselected`; `make integration-test` reported `2 passed, 70 deselected` using an existing emulator. The integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle. See [testing](./docs/testing.md) for results and coverage limits.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -148,9 +158,10 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 | Understand Gradle and APK builds | [Gradle APK lifecycle](./docs/gradle-apk-lifecycle.md) |
 | Check emulator runtime | [Smoke test](./docs/smoke-test.md) |
 | Run tests | [Testing](./docs/testing.md) |
+| Run CI smoke and understand cleanup | [CI and cleanup](./docs/ci-cleanup.md) |
 | Understand the tools | [Android ecosystem](./docs/android_ecosystem.md) |
 | Understand virtualization | [Emulator, VM, and Docker](./docs/android_emulator_vm_docker.md) |
 
-Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration and CI orchestration are outside this release. The [roadmap](./roadmap.md) describes planned work.
+Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration and hosted emulator CI are outside this release. The local CI runner is available; the unit workflow is configured in [.github/workflows/ci.yml](./.github/workflows/ci.yml) and awaits hosted verification after push. See [CI and cleanup](./docs/ci-cleanup.md). The [roadmap](./roadmap.md) describes planned work.
 
-The documentation targets v0.4.4. `pyproject.toml` also declares package version `0.4.4`.
+The documentation and `pyproject.toml` target version `0.4.5`. See [testing](./docs/testing.md) for current verification results and release checks.

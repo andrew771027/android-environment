@@ -1,6 +1,6 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.4.4 setup:
+Use these checks at different stages of Android Environment v0.4.5 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
