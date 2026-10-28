@@ -20,7 +20,7 @@ def run_bash(
         ],
         env=env,
         text=True,
-        captured_output=True,
+        capture_output=True,
         check=False,
         timeout=10,
     )
