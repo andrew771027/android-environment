@@ -2,7 +2,7 @@ import os
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().partents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 LIB = ROOT / "scripts" / "lib" / "hosted_ci.sh"
 
