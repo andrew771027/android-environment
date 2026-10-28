@@ -9,7 +9,7 @@ hosted_ci_supported_platform(){
     local arch="{2:?arch required}"
 
     [[ "${os}" == "linux" ]] &&
-    [[ "${arch}" == "x86_64"]]
+    [[ "${arch}" == "x86_64" ]]
 
 }
 
