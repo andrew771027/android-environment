@@ -37,6 +37,7 @@ jobs:
     env:
 
       ANDROID_API_LEVEL: "36"
+      ANDROID_AVD_HOME: ${{ runner.temp }}/android-avd
     
     steps:
 
@@ -146,6 +147,7 @@ jobs:
 
       - name: Create AVD
         run: |
+          mkdir -p "$ANDROID_AVD_HOME"
           make create-avd
       
       - name: Validate provisioned environment
