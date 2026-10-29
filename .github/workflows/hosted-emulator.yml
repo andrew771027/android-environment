@@ -1,6 +1,9 @@
 name: Hosted Android Emulator CI
 
 on:
+  push:
+    branches:
+      - "**"
   workflow_dispatch:
   
 #  pull_request:
