@@ -44,7 +44,7 @@ def test_macos_is_not_hosted_linux_target():
 def test_linux_arm64_is_not_v046_target():
 
     result = run_bash(
-        'hosted_ci_supported_platform "darwin" "x86_64"'
+        'hosted_ci_supported_platform "linux" "arm64"'
     )
 
     assert result.returncode != 0

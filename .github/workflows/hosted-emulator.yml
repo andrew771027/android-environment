@@ -11,7 +11,7 @@ on:
 #      - ".github/workflows/hosted-emulator.yml"
 #      - "Makefile"
 
-permission:
+permissions:
   contents: read
 
 
