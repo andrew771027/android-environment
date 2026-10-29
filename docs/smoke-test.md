@@ -1,8 +1,8 @@
-# Android Environment v0.4.5 — Emulator Smoke Test
+# Android Environment v0.4.6 — Emulator Smoke Test
 
 ## Overview
 
-Introduced in v0.4.4, the smoke test checks a running Android Emulator. Version 0.4.5 adds a CI runner that starts an emulator, runs these same checks, and attempts cleanup.
+Introduced in v0.4.4, the smoke test checks a running Android Emulator. Version 0.4.5 introduced a CI runner that starts an emulator, runs these same checks, and attempts cleanup.
 
 Previous versions established:
 
@@ -277,10 +277,10 @@ Serial:
 
 ## CI smoke with cleanup
 
-Version 0.4.5 adds:
+The CI runner introduced in v0.4.5 is available in v0.4.6 as:
 
 ```bash
-make ci-headless-smoke
+make hosted-emulator-ci
 ```
 
 This command starts an emulator, runs the existing six smoke checks, and attempts cleanup of its own process on exit. It refuses to start if ADB lists any emulator and preserves that existing instance. A startup or smoke failure remains a failure even when cleanup succeeds. A cleanup failure also fails an otherwise successful run. See [CI and cleanup](./ci-cleanup.md).
@@ -601,6 +601,10 @@ Emulator Smoke Test
     v
 v0.4.5
 Local CI runner / owned-process cleanup
+    |
+    v
+v0.4.6
+GitHub hosted emulator CI
 ```
 
 ---

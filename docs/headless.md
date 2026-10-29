@@ -1,6 +1,6 @@
 # Run a headless emulator
 
-Android Environment v0.4.5 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
+Android Environment v0.4.6 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
 
 ## Before you start
 
@@ -52,7 +52,7 @@ READY: cookbook_pixel_api_36 (emulator-5554)
 
 The default boot wait is 180 polling seconds, with a check every second and one final check at the deadline. ADB command duration is additional; this is not a strict wall-clock timeout.
 
-If boot times out or the AVD name does not match, start exits non-zero. When invoked directly, it leaves the emulator process running for inspection. `make ci-headless-smoke` instead attempts to clean up the process started by that run.
+If boot times out or the AVD name does not match, start exits non-zero. When invoked directly, it leaves the emulator process running for inspection. `make hosted-emulator-ci` instead attempts to clean up the process started by that run.
 
 ## Check status
 
@@ -111,4 +111,4 @@ adb -s emulator-5554 emu avd name
 
 The entry points are [headless_start.sh](../scripts/headless_start.sh), [headless_status.sh](../scripts/headless_status.sh), and [headless_stop.sh](../scripts/headless_stop.sh). They share [headless.sh](../scripts/lib/headless.sh).
 
-Nine [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and ADB-listing failure in the start, status, and stop entry points. They do not exercise real acceleration or the complete start/stop entry points. Use `make smoke` after startup or `make headless-smoke` to start and check runtime capabilities. Neither command stops the emulator. See [smoke test](./smoke-test.md). Version 0.4.5 adds `make ci-headless-smoke` with a private PID file and `headless_stop.sh --owned` cleanup. This path validates the process command and can stop its tracked process even before Android becomes ready. It uses TERM/KILL directly rather than ADB shutdown. See [CI and cleanup](./ci-cleanup.md). See [testing](./testing.md) for the recorded checks.
+Nine [mock tests](../tests/test_headless.py) cover device listing, boot readiness, wait success/timeout, AVD-name parsing, and ADB-listing failure in the start, status, and stop entry points. They do not exercise real acceleration or the complete start/stop entry points. Use `make smoke` after startup or `make headless-smoke` to start and check runtime capabilities. Neither command stops the emulator. See [smoke test](./smoke-test.md). The CI runner introduced in v0.4.5 is now available as `make hosted-emulator-ci` with a private PID file and `headless_stop.sh --owned` cleanup. This path validates the process command and can stop its tracked process even before Android becomes ready. It uses TERM/KILL directly rather than ADB shutdown. See [CI and cleanup](./ci-cleanup.md). See [testing](./testing.md) for the recorded checks.

@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.4.5 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.4.6 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 
@@ -47,6 +47,12 @@ An existing directory is sufficient for the installer to skip installation; it d
 Desktop reset always adds `-wipe-data -no-snapshot-load -no-boot-anim`. Its wait for the previous emulator to disconnect has no timeout.
 
 Polling budgets count sleep time. They do not bound individual ADB calls or total elapsed time.
+
+## Hosted runner SDK and AVD paths
+
+The hosted workflow resolves the SDK from nonempty `ANDROID_HOME`, falling back to `ANDROID_SDK_ROOT`, then exports both variables to the same directory. Local scripts still use the `ANDROID_HOME` default from `config/android.env`; they do not generally provide that fallback.
+
+The workflow sets `ANDROID_AVD_HOME=$RUNNER_TEMP/android-avd` and creates that directory before AVD creation. This isolates job AVDs from other runner defaults. The workflow-level API value does not override the unconditional assignments in `config/android.env`. See [hosted emulator CI](./hosted-emulator-ci.md).
 
 ## Runtime PID files
 
