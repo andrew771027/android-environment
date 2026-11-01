@@ -10,7 +10,8 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	kvm-check \
 	unit-test \
 	smoke \
-	ci-headless-smoke \
+	hosted-emulator-ci \
+	hosted-ci-check \
 	emulator-start \
 	emulator-wait \
 	emulator-status \
@@ -50,8 +51,11 @@ create-avd:
 smoke:
 	./scripts/smoke_test.sh
 
-ci-headless-smoke:
+hosted-emulator-ci:
 	./scripts/ci_headless_smoke.sh
+
+hosted-ci-check:
+	./scripts/check_hosted_ci.sh
 
 emulator-start:
 	./scripts/start_emulator.sh
@@ -63,7 +67,7 @@ emulator-status:
 	./scripts/emulator_status.sh
 
 emulator-stop:
-	./scripts/stop_emulator.sh
+	./scripts/stop_emulator.sh --owned
 
 emulator-reset:
 	./scripts/reset_emulator.sh

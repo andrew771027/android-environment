@@ -1,6 +1,6 @@
-# 測試指南 — v0.4.5
+# 測試指南 — v0.4.6
 
-目前原始碼定義 70 個單元與 2 個整合案例。單元測試使用 fake SDK commands、Bash helpers 和暫存 host processes，不需要真實 SDK，也不會啟動 Android emulator。程序案例需要 `ps` 與對測試程序送訊號的權限。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
+目前原始碼定義 78 個單元與 2 個整合案例。單元測試使用 fake SDK commands、Bash helpers 和暫存 host processes，不需要真實 SDK，也不會啟動 Android emulator。程序案例需要 `ps` 與對測試程序送訊號的權限。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
 
 ## 準備環境
 
@@ -18,16 +18,17 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 
 | 範圍 | 指令 | 案例數 | 需求 |
 | --- | --- | --- | --- |
-| 單元 | `make unit-test` | 70 | Python、pytest、Bash；不需啟動 emulator |
-| 單元詳細輸出 | `python -m pytest -v -m "not integration" tests` | 70 | 同上 |
+| 單元 | `make unit-test` | 78 | Python、pytest、Bash；不需啟動 emulator |
+| 單元詳細輸出 | `python -m pytest -v -m "not integration" tests` | 78 | 同上 |
 | 整合 | `make integration-test` | 2 | SDK、baseline AVD、online emulator |
 | Build Tools helpers | `python -m pytest -v tests/test_build_tools.py` | 6 | 使用暫存檔，不需真實 Build Tools |
 | Smoke helpers / runner | `python -m pytest -v tests/test_smoke.py` | 19 | Fake ADB，不啟動 emulator |
 | Process helpers | `python -m pytest -v tests/test_process.py` | 13 | 可檢查及終止測試程序 |
+| Hosted CI helpers | `python -m pytest -v tests/test_hosted_ci.py` | 8 | Fake SDK 路徑與 KVM 檔案 |
 | CI cleanup | `python -m pytest -v tests/test_ci_cleanup.py` | 7 | Fake scripts、暫存程序 |
-| 全部 | `python -m pytest -v tests` | 72 | 整合案例所需環境 |
+| 全部 | `python -m pytest -v tests` | 80 | 整合案例所需環境 |
 
-`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 72 個案例。
+`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 80 個案例。
 
 ## 單元測試涵蓋範圍
 
@@ -40,6 +41,7 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 | [test_build_tools.py](../tests/test_build_tools.py) | 6 | Package ID、versioned directory、目錄存在／缺少、三個 required executables、缺少 zipalign |
 | [test_smoke.py](../tests/test_smoke.py) | 19 | 六項檢查、ADB 失敗但輸出有效、runner 成功／失敗 |
 | [test_process.py](../tests/test_process.py) | 13 | 存活判斷、PID parsing、安全值檢查、TERM、KILL fallback、EXIT trap |
+| [test_hosted_ci.py](../tests/test_hosted_ci.py) | 8 | Linux x86_64 限定、SDK root 優先序與缺少值、KVM 檔案存在與存取；不執行 preflight entry point |
 | [test_ci_cleanup.py](../tests/test_ci_cleanup.py) | 7 | 啟動前失敗不 stop、啟動後失敗清理、成功、cleanup failure、保留原錯誤、拒絕無關程序、無 ADB ready 時清理 |
 
 Mock 將假的 `adb`、`emulator` 或 `uname` 放在子程序 `PATH` 最前面。KVM 路徑測試使用一般暫存檔，不是 `/dev/kvm`。Build Tools 案例使用暫存目錄與 `exit 0` executable stubs，不執行真實 binary。Timeout 案例仍會真正 `sleep`。
@@ -65,7 +67,24 @@ make integration-test
 
 AVD listing 與 boot 案例彼此獨立，不能證明正在執行的是設定中的 AVD，也不檢查 headless flags、固定 serial、acceleration 或 shutdown。
 
-## v0.4.5 驗證紀錄
+## v0.4.6 驗證紀錄
+
+2026-10-29，macOS Intel 工作區使用 Python 3.14.8、pytest 9.1.1；Make 選用 `python3`。
+
+| 指令 | 結果 |
+| --- | --- |
+| `python3 -m pytest --collect-only -q tests` | 80 cases：78 unit、2 integration |
+| `make unit-test` | `78 passed, 2 deselected in 21.72s` |
+| `make integration-test` | `2 passed, 78 deselected in 0.21s` |
+| `bash -n` 檢查 `scripts/` 下所有 Shell 腳本 | 31 支全部通過 |
+
+沙箱內首次 unit 為 `4 failed, 74 passed, 2 deselected`，失敗集中於需要 `ps` 的 process／owned cleanup 案例；整合為 `1 failed, 1 passed, 78 deselected`，失敗於本機 ADB 存取。其後以沙箱外權限重驗。整合使用既有 emulator，沒有為本次驗證啟動或停止它；unit 使用暫存 host processes，不啟動 Android emulator。
+
+本次未執行真實完整 start／smoke／cleanup、GitHub-hosted Ubuntu/KVM、Apple Silicon、Gradle build 或 APK 安裝。未取得遠端 Actions run 結果，不把 workflow 設定存在視為 hosted 驗證通過。
+
+八個新案例只測試 `scripts/lib/hosted_ci.sh`。`make hosted-ci-check` 入口目前有 `GItHUB_ACTIONS` 拼字與 `${detect_os}`／`${detect_arch}` 函式呼叫問題；workflow 並未呼叫該入口。AVD creation 的 listing failure、硬體 profile 與 post-create diagnostics 改動也沒有專屬自動化案例。詳見 [hosted emulator CI](./hosted-emulator-ci.md)。
+
+## v0.4.5 歷史驗證紀錄
 
 2026-10-22，使用 macOS Intel 工作區的 Python 3.14.8、pytest 9.1.1 執行。`make` 選用 `python3`，工作區沒有 `.venv`。
 
@@ -116,7 +135,7 @@ Mock 執行沒有啟動 emulator；整合測試使用既有 online emulator。�
 
 已修正 acceleration helper 的 `return`、boot 失敗測試的函式名稱與引號，以及 runner 的 `set -euo pipefail`。Smoke helpers 在正規化輸出前明確檢查 ADB 退出碼，不依賴呼叫端 shell options。新增回歸案例確認這些失敗路徑。
 
-Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner 與本機 CI wrapper 已實作；`.github/workflows/ci.yml` 已設定 Shell checks、unit selection 與 JUnit artifact upload；推送後的 hosted 執行尚待驗證。APK build verification 尚未實作。
+Build Tools 案例不涵蓋不可執行的 binaries、installer 的 SDK command 呼叫、部分安裝修復或完整 validator 流程。Smoke runner 與本機 CI wrapper 已實作；`.github/workflows/ci.yml` 已設定 Shell checks、unit selection 與 JUnit artifact upload；另有獨立 hosted emulator workflow；遠端執行結果尚待驗證。APK build verification 尚未實作。
 
 Mock 已包含 smoke runner 成功／失敗，以及 headless start／stop 的 ADB-listing 失敗路徑。CI wrapper 的測試使用替代 start／stop／smoke scripts，沒有跑完整真實 Android 啟停，也未涵蓋 signal delivery、所有 PID reuse 與實際 emulator command-line 變化。Smoke 不驗證 AVD identity；詳見 [smoke test](./smoke-test.md)。
 

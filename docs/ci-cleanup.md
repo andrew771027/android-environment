@@ -1,6 +1,6 @@
-# CI and cleanup — v0.4.5
+# CI and cleanup — v0.4.6
 
-Version 0.4.5 provides a local CI runner that starts a headless emulator, checks Android runtime capabilities, and attempts to stop the process created by that run. It does not reuse an existing emulator.
+Version 0.4.6 provides a local CI runner that starts a headless emulator, checks Android runtime capabilities, and attempts to stop the process created by that run. It does not reuse an existing emulator.
 
 ## Run a complete cycle
 
@@ -8,7 +8,7 @@ Complete [setup](./setup.md), put `adb` and `emulator` on `PATH`, and ensure no 
 
 ```bash
 adb devices
-make ci-headless-smoke
+make hosted-emulator-ci
 ```
 
 The Make target invokes [ci_headless_smoke.sh](../scripts/ci_headless_smoke.sh):
@@ -27,7 +27,7 @@ The runner requires macOS emulator acceleration or Linux x86_64 with KVM. It use
 | --- | --- | --- |
 | `make smoke` | No; checks an existing emulator | No |
 | `make headless-smoke` | Yes; refuses existing emulators | No |
-| `make ci-headless-smoke` | Yes; refuses existing emulators | Best effort, limited to this run’s tracked process |
+| `make hosted-emulator-ci` | Yes; refuses existing emulators | Best effort, limited to this run’s tracked process |
 
 ## PID ownership
 
@@ -95,9 +95,9 @@ Failed cleanup logs `Retained PID file` with its path for inspection. That tempo
 
 The unit workflow is [.github/workflows/ci.yml](../.github/workflows/ci.yml). It triggers on pushes to all branches, pull requests, and manual dispatch after the workflow is available to GitHub.
 
-It uses Python 3.14, installs the project's pytest version range, checks every Shell script under `scripts/`, and runs only tests marked `not integration`. The JUnit report is written to `artifacts/pytest.xml`. An `always()` artifact step attempts upload even after a failed test, with seven-day retention. The job does not install an SDK or start an emulator.
+It uses Python 3.14, installs the project's pytest version range, checks six selected Shell scripts (headless start/status/stop, smoke, CI wrapper, and process helpers), and runs only tests marked `not integration`. The JUnit report is written to `artifacts/pytest.xml`. An `always()` artifact step attempts upload even after a failed test, with seven-day retention. The job does not install an SDK or start an emulator.
 
-The configuration has been checked locally; a successful hosted run must be verified after pushing it. This branch defines only the `test` job. A separate `headless` job seen in another branch or an older run belongs to that run's workflow and commit. Real emulator CI requires separate SDK provisioning and an acceleration-capable runner. See the [roadmap](../roadmap.md).
+A separate [.github/workflows/hosted-emulator.yml](../.github/workflows/hosted-emulator.yml) provisions SDK packages and an AVD on Ubuntu 24.04, enables KVM access, and invokes `make hosted-emulator-ci`. See [hosted emulator CI](./hosted-emulator-ci.md) for triggers, diagnostics, and verification limits.
 
 ## Test coverage
 

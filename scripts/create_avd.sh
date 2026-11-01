@@ -64,7 +64,8 @@ fi
 # Idempotent AVD creation
 # ------------------------------------------
 
-if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
+avd_list="$(emulator -list-avds)" || die "Unable to list AVDs with emulator"
+if grep -Fxq "${AVD_NAME}" <<< "${avd_list}"; then
 
     log_ok "AVD already exists: ${AVD_NAME}"
 
@@ -76,7 +77,8 @@ fi
 # Validate hardware profile
 # ------------------------------------------
 
-if avdmanager list device -c 2>/dev/null | grep -Fxq "${AVD_DEVICE}"; then
+device_list="$(avdmanager list device -c)" || die "Unable to list hardware profiles"
+if grep -Fxq "${AVD_DEVICE}" <<< "${device_list}"; then
 
     log_ok "Hardware profile found: ${AVD_DEVICE}"
 
@@ -94,21 +96,30 @@ fi
 echo
 log_info "Creating AVD: ${AVD_NAME}"
 
-echo "no" | avdmanager create avd \
+avdmanager create avd \
     -n "${AVD_NAME}" \
     -k "${SYSTEM_IMAGE}" \
-    -d "${AVD_DEVICE}"
+    -d "${AVD_DEVICE}" <<< "no"
 
 
 # ------------------------------------------
 # Validate result
 # ------------------------------------------
 
-if emulator -list-avds | grep -Fxq "${AVD_NAME}"; then
+avd_list="$(emulator -list-avds)" || die "Unable to list AVDs after creation"
+if grep -Fxq "${AVD_NAME}" <<< "${avd_list}"; then
 
     log_ok "AVD created: ${AVD_NAME}"
 
 else
+
+    echo "ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-<unset>}" >&2
+    echo "ANDROID_USER_HOME=${ANDROID_USER_HOME:-<unset>}" >&2
+    echo "ANDROID_EMULATOR_HOME=${ANDROID_EMULATOR_HOME:-<unset>}" >&2
+    echo "ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-<unset>}" >&2
+    echo "HOME=${HOME}" >&2
+    printf 'emulator -list-avds output:\n%s\n' "${avd_list}" >&2
+    avdmanager list avd >&2 || true
 
     die "AVD creation failed: ${AVD_NAME}"
 
