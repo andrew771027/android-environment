@@ -56,7 +56,7 @@ select_single_physical_device(){
     )"
 
     count="$(
-        print '%s\n' "${devices}" |
+        printf '%s\n' "${devices}" |
             awk 'NF {count++} END {print count+0}'
     )"
 
