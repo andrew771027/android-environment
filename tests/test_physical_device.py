@@ -11,7 +11,7 @@ SERIAL = "ABC123"
 def make_fake_tools(
     tmp_path: Path,
     *,
-    adb_state: str = device,
+    adb_state: str = "device",
     include_emulator: bool = False,
     fastboot_emulator: bool = False,
 ) -> dict[str, str]:
