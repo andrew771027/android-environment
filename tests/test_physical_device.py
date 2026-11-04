@@ -13,7 +13,7 @@ def make_fake_tools(
     *,
     adb_state: str = "device",
     include_emulator: bool = False,
-    fastboot_emulator: bool = False,
+    fastboot_present: bool = False,
 ) -> dict[str, str]:
 
     bin_dir = tmp_path / "bin"
