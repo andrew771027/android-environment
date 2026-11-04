@@ -9,7 +9,7 @@
 
 list_physical_adb_devices(){
 
-    adb devicess | 
+    adb devices | 
         awk '
             NR > 1 &&
             NF >= 2 &&
