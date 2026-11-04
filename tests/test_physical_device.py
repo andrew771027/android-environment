@@ -193,6 +193,7 @@ def test_unauthorized_device(
 
     result = run_bash(
         f'physical_device_is_authorized "{SERIAL}"',
+        env,
     )
 
     assert result.returncode != 0
@@ -254,6 +255,7 @@ def test_deivce_sdk_level(
 
     result = run_bash(
         f'device_sdk_level "{SERIAL}"',
+        env,
     )
 
     assert result.returncode == 0
