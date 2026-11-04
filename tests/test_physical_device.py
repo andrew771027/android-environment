@@ -149,7 +149,7 @@ def test_list_physical_deivce(
 
 def test_emulator_is_excluded(
     tmp_path: Path,
-)
+):
 
     env = make_fake_tools(
         tmp_path,
