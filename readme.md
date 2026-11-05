@@ -1,8 +1,8 @@
-# Android Environment v0.4.6
+# Android Environment v0.5.0
 
 Set up an Android SDK and emulator for Android Cookbook from the command line. Android Studio is optional.
 
-Version 0.4.6 adds a GitHub-hosted Ubuntu emulator workflow that provisions SDK packages and an AVD, checks KVM acceleration, and runs the existing headless CI runner with PID tracking and best-effort cleanup. It starts an isolated emulator, runs the smoke test, and cleans up its own process on exit. Existing emulators are preserved when startup is refused. Desktop, headless, and optional Build Tools commands remain available.
+Version 0.5.0 adds physical-device discovery, ADB authorization checks, device facts, and read-only Fastboot detection. Commands select one authorized non-emulator ADB transport automatically or accept an explicit serial. Desktop startup also enables software GPU rendering by default. Desktop, headless, hosted emulator CI, and optional Build Tools workflows remain available.
 
 ## SDK target
 
@@ -68,6 +68,24 @@ adb shell getprop ro.build.version.sdk
 
 The SDK property should report `36`. Use `adb -s SERIAL` when more than one device is connected.
 
+## Connect a physical device
+
+Install SDK Platform Tools and put `adb` and `fastboot` on `PATH`. Enable USB debugging, connect the phone, unlock it, and accept the RSA debugging prompt:
+
+```bash
+make physical-device-check
+make physical-device-facts
+```
+
+With multiple authorized devices, select one explicitly:
+
+```bash
+make physical-device-check SERIAL=ABC123
+make physical-device-facts SERIAL=ABC123
+```
+
+After manually entering a supported Fastboot mode, use `make fastboot-device-check SERIAL=ABC123`. This only checks visibility; it does not reboot, unlock, or flash the device. See [physical devices](./docs/physical-device.md) and [Fastboot](./docs/fastboot.md).
+
 ## Commands
 
 | Command | Action |
@@ -93,6 +111,9 @@ The SDK property should report `36`. Use `adb -s SERIAL` when more than one devi
 | `make headless-smoke` | Run headless start, then smoke; leaves the emulator running |
 | `make hosted-ci-check` | Hosted preflight entry point; currently has known implementation defects; see the hosted CI guide |
 | `make hosted-emulator-ci` | Start, run smoke, and clean up this run’s emulator; refuses existing emulators |
+| `make physical-device-check [SERIAL=ABC123]` | Check the selected ADB transport is authorized |
+| `make physical-device-facts [SERIAL=ABC123]` | Print identity, Android version, SDK, and build fingerprint |
+| `make fastboot-device-check [SERIAL=ABC123]` | List Fastboot serials or require a selected serial |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
 | `make unit-test` | Run tests that do not require a real SDK or emulator |
@@ -120,13 +141,13 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 make unit-test
 ```
 
-The source defines 78 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
+The source defines 102 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
 
 ```bash
 make integration-test
 ```
 
-See [testing](./docs/testing.md) for the v0.4.6 verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
+See [testing](./docs/testing.md) for the v0.5.0 verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -138,6 +159,7 @@ See [testing](./docs/testing.md) for the v0.4.6 verification results and coverag
 | `AVD_DEVICE` | `pixel_7` | Hardware profile for AVD creation |
 | `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot polling wait budget |
 | `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Delay between readiness checks |
+| `EMULATOR_NO_GPU_ACCERLATION` | `true` | Add `-gpu software` for a new desktop start; spelling matches source |
 | `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Start with `-no-snapshot-load` |
 | `EMULATOR_NO_BOOT_ANIMATION` | `true` | Disable the boot animation with `-no-boot-anim` |
 
@@ -158,6 +180,7 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 | Prepare APK build tools | [Build Tools](./docs/build-tools.md) |
 | Understand Gradle and APK builds | [Gradle APK lifecycle](./docs/gradle-apk-lifecycle.md) |
 | Check emulator runtime | [Smoke test](./docs/smoke-test.md) |
+| Connect physical hardware | [Physical devices](./docs/physical-device.md), [Fastboot](./docs/fastboot.md) |
 | Run tests | [Testing](./docs/testing.md) |
 | Run CI smoke and understand cleanup | [CI and cleanup](./docs/ci-cleanup.md) |
 | Run a hosted emulator | [GitHub hosted emulator CI](./docs/hosted-emulator-ci.md) |
@@ -166,4 +189,4 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 
 Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration is outside this release. Separate [unit](./.github/workflows/ci.yml) and [hosted emulator](./.github/workflows/hosted-emulator.yml) workflows are configured. Their successful remote execution must be confirmed from GitHub Actions logs. The [roadmap](./roadmap.md) describes planned work.
 
-The documentation and `pyproject.toml` target version `0.4.6`. See [testing](./docs/testing.md) for current verification results and release checks.
+The documentation and `pyproject.toml` target version `0.5.0`. See [testing](./docs/testing.md) for current verification results and release checks.

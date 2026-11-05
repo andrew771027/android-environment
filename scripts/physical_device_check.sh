@@ -31,7 +31,7 @@ if [[ -z "${SERIAL}" ]]; then
 
     set +e
 
-    SERIAL="${select_single_physical_device}"
+    SERIAL="$(select_single_physical_device)"
 
     rc=$?
 
@@ -64,7 +64,7 @@ echo "[INFO] Serial: ${SERIAL}"
 # Check ADB state
 # --------------------------------------------------
 
-state="${physical_device_state "${SERIAL}"}"
+state="$(physical_device_state "${SERIAL}")"
 
 
 case "${state}" in

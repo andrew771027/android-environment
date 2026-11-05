@@ -1,6 +1,6 @@
 # Desktop emulator lifecycle reference
 
-Android Environment v0.4.6's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
+Android Environment v0.5.0's desktop commands share [scripts/lib/emulator.sh](../scripts/lib/emulator.sh). This reference describes their current behavior. For usage, see the [emulator guide](./emulator.md); headless commands use a [separate library and workflow](./headless.md).
 
 ## Device selection
 
@@ -43,3 +43,7 @@ The desktop helpers do not read `EMULATOR_PORT`, `EMULATOR_SERIAL`, `EMULATOR_ST
 ## Test coverage
 
 Six [helper tests](../tests/test_emulator_lib.py) use fake ADB output to check discovery, boot properties, missing devices, and timeout behavior. They do not run the lifecycle entry points. The two [integration tests](../tests/test_emulator_integration.py) check AVD listing and a running emulator's boot property, but do not establish that both refer to the same AVD.
+
+## Desktop GPU setting in v0.5.0
+
+A new desktop launch uses `-gpu software` when `EMULATOR_NO_GPU_ACCERLATION=true` in `config/android.env` (the default; spelling matches source). This applies to `make emulator-start` when launching a process. It does not change an already connected emulator, desktop reset, or the separate headless launcher.

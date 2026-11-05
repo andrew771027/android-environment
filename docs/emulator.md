@@ -1,6 +1,6 @@
 # Use the Android Emulator
 
-This guide covers desktop emulator operation in Android Environment v0.4.6. Complete [setup](./setup.md) first. For macOS or Linux x86_64 without an emulator window, use the [headless workflow](./headless.md).
+This guide covers desktop emulator operation in Android Environment v0.5.0. Complete [setup](./setup.md) first. For macOS or Linux x86_64 without an emulator window, use the [headless workflow](./headless.md).
 
 An AVD stores a virtual device's configuration and user data. The Emulator is the host program that runs it. The default AVD is `cookbook_pixel_api_36`, with a `pixel_7` hardware profile and an Android 16 / API 36 Google APIs image.
 
@@ -112,3 +112,7 @@ Desktop start writes to `artifacts/emulator.log`; reset writes to `emulator.log`
 | Wrong device receives an ADB command | Pass `-s SERIAL`; keep one emulator online for repository lifecycle commands |
 
 For implementation details, see [lifecycle reference](./emulator-lifecycle.md). For commands to run the two existing SDK/emulator tests, see [testing](./testing.md).
+
+## Desktop GPU setting in v0.5.0
+
+A new desktop launch uses `-gpu software` when `EMULATOR_NO_GPU_ACCERLATION=true` in `config/android.env` (the default; spelling matches source). This applies to `make emulator-start` when launching a process. It does not change an already connected emulator, desktop reset, or the separate headless launcher.

@@ -1,489 +1,81 @@
-# Android Environment v0.5 — Physical Device
+# Physical devices — v0.5.0
 
-## Overview
+Use the physical-device commands to select an ADB transport, check authorization, and read device facts. They require SDK Platform Tools on `PATH`; they do not require an AVD or emulator acceleration. Run commands from the repository root.
 
-Android Environment v0.5 introduces support for real Android hardware.
+## Connect and check
 
-Previous versions focused mainly on Android Emulator lifecycle and hosted virtual environments.
-
-v0.5 adds a second runtime target:
-
-```text
-Android Environment
-        |
-        +-------------------+
-        |                   |
-        v                   v
-     Emulator          Physical Device
-        |                   |
-        v                   v
-       ADB              USB / ADB
-```
-
-The goal of v0.5 is not flashing or modifying a device.
-
-The goal is:
-
-> Establish a safe and deterministic connection between a workstation and a physical Android device.
-
----
-
-## Scope
-
-v0.5 covers:
-
-```text
-USB connection
-USB debugging
-ADB authorization
-device serial
-device selection
-device facts
-Fastboot visibility
-```
-
-It intentionally does not perform:
-
-```text
-bootloader unlock
-partition flashing
-factory image installation
-root
-recovery modification
-```
-
----
-
-## Physical Device Lifecycle
-
-A basic development connection looks like:
-
-```text
-Physical Android Device
-        |
-        v
-USB cable
-        |
-        v
-Developer Options
-        |
-        v
-USB Debugging
-        |
-        v
-RSA Authorization
-        |
-        v
-ADB
-        |
-        v
-AUTHORIZED DEVICE
-```
-
-ADB authorization is an explicit trust relationship between the Android device and the workstation.
-
----
-
-## USB Debugging
-
-Enable Developer Options on the Android device.
-
-Then enable:
-
-```text
-USB debugging
-```
-
-After connecting the USB cable:
+1. Enable Developer Options and USB debugging on the phone.
+2. Connect a data-capable USB cable and unlock the phone.
+3. Accept the workstation's RSA debugging prompt.
+4. Check the connection:
 
 ```bash
 adb devices
+make physical-device-check
+make physical-device-facts
 ```
 
-may initially report:
-
-```text
-List of devices attached
-ABC123    unauthorized
-```
-
-The device should display an RSA authorization dialog.
-
-Unlock the device and approve the workstation.
-
-Run again:
+For an explicit serial:
 
 ```bash
-adb devices
+make physical-device-check SERIAL=ABC123
+make physical-device-facts SERIAL=ABC123
 ```
 
-Expected:
-
-```text
-ABC123    device
-```
-
----
-
-## ADB States
-
-Important ADB states include:
-
-### `device`
-
-```text
-ABC123    device
-```
-
-The device is authorized and available.
-
-### `unauthorized`
-
-```text
-ABC123    unauthorized
-```
-
-The workstation has not yet been trusted.
-
-Check the Android device for the USB debugging authorization dialog.
-
-### `offline`
-
-```text
-ABC123    offline
-```
-
-ADB knows about the transport, but communication is not currently usable.
-
-### Missing
-
-If the device does not appear at all, investigate:
-
-```text
-USB cable
-USB mode
-Developer Options
-USB debugging
-host USB permissions
-ADB server
-```
-
----
-
-## Device Serial
-
-Each ADB transport is identified by a serial.
-
-Example:
-
-```text
-ABC123
-```
-
-Use:
+The scripts accept a first positional argument, then fall back to the `DEVICE_SERIAL` environment variable when that argument is absent or empty:
 
 ```bash
-adb -s ABC123 shell
+./scripts/physical_device_check.sh ABC123
+DEVICE_SERIAL=ABC123 ./scripts/physical_device_facts.sh
 ```
 
-to explicitly select one device.
+Make forwards `SERIAL` as the positional argument. A nonempty value takes precedence over `DEVICE_SERIAL`. These scripts do not source `config/android.env`.
 
-This becomes essential when a workstation has multiple connected devices.
+## Automatic selection
 
-Example:
+[scripts/lib/physical_device.sh](../scripts/lib/physical_device.sh) parses `adb devices`, excludes serials starting with `emulator-`, and counts only entries whose state is `device`.
 
-```text
-Workstation
-├── Pixel A
-├── Pixel B
-├── OnePlus
-└── Emulator
-```
+| Authorized candidates | Result |
+| --- | --- |
+| 0 | Fail; check reports `No authorized physical Android device found` |
+| 1 | Select that serial |
+| 2 or more | Fail; provide an explicit serial |
 
-Automation should never silently choose an arbitrary physical device when multiple valid devices are connected.
+Unauthorized and offline entries do not count toward selection. To obtain their specific diagnostic, pass their serial explicitly. Selection excludes emulators by serial prefix only: it does not verify USB hardware or exclude network ADB transports. An explicitly supplied serial is checked for ADB state without the emulator-prefix filter.
 
-The v0.5 policy is:
+## Authorization results
 
-```text
-0 devices
-    → fail
+| Selected serial state | Check result |
+| --- | --- |
+| `device` | Exit 0; `ADB authorization accepted` |
+| `unauthorized` | Exit 1; unlock the phone and accept the RSA prompt |
+| `offline` | Exit 1; ADB transport is visible but unavailable |
+| Missing | Exit 1; serial not found |
+| Other | Exit 1; unexpected state |
 
-1 authorized physical device
-    → auto-select
+A successful check confirms the listed ADB state. It does not wait for Android boot completion, run a shell readiness check, or verify an expected model or API level.
 
-2+ authorized physical devices
-    → require explicit serial
-```
+If no transport appears, inspect the cable, USB debugging setting, host USB permissions, and ADB server. Linux USB/udev permissions are separate from `/dev/kvm` emulator permissions. See the [Linux](./linux.md) and [macOS](./macos.md) host guides.
 
----
+## Device facts
 
-## Checking a Physical Device
+`make physical-device-facts` requires the selected transport to be authorized, then reads these properties with `adb -s SERIAL shell getprop`:
 
-Run:
+| Output | Property |
+| --- | --- |
+| Serial | Selected ADB serial |
+| Manufacturer | `ro.product.manufacturer` |
+| Model | `ro.product.model` |
+| Product | `ro.product.name` |
+| Device codename | `ro.product.device` |
+| Android version | `ro.build.version.release` |
+| SDK level | `ro.build.version.sdk` |
+| Build fingerprint | `ro.build.fingerprint` |
 
-```bash
-make physical-check
-```
+The helper removes carriage returns and newlines and suppresses property-command stderr. Facts are printed for inspection; empty values and compatibility with the SDK baseline are not validated. A physical device need not run API 36.
 
-If exactly one authorized physical device exists, it is selected automatically.
+## Scope and verification
 
-For multiple devices:
+These commands do not install APKs, change device settings, reboot, unlock, or flash. Fastboot visibility is a [separate check](./fastboot.md) performed after manually changing device mode.
 
-```bash
-make physical-check SERIAL=ABC123
-```
-
-Successful result:
-
-```text
-==========================================
- Physical Android Device Check
-==========================================
-
-[INFO] Serial: ABC123
-[ OK ] ADB authorization accepted
-
-==========================================
- Physical Device Check PASSED
-==========================================
-```
-
----
-
-## Device Facts
-
-Run:
-
-```bash
-make physical-facts
-```
-
-or:
-
-```bash
-make physical-facts SERIAL=ABC123
-```
-
-The command collects:
-
-```text
-serial
-manufacturer
-model
-product
-device codename
-Android version
-SDK level
-build fingerprint
-```
-
-These values are retrieved through Android system properties.
-
-Examples:
-
-```bash
-adb -s ABC123 shell getprop ro.product.manufacturer
-adb -s ABC123 shell getprop ro.product.model
-adb -s ABC123 shell getprop ro.product.device
-adb -s ABC123 shell getprop ro.build.version.release
-adb -s ABC123 shell getprop ro.build.version.sdk
-adb -s ABC123 shell getprop ro.build.fingerprint
-```
-
----
-
-## Emulator vs Physical Device
-
-ADB sees both Emulator and physical devices.
-
-Example:
-
-```text
-emulator-5554    device
-ABC123           device
-```
-
-v0.5 physical-device discovery intentionally excludes serials beginning with:
-
-```text
-emulator-
-```
-
-This keeps the two environment targets separate.
-
----
-
-## Linux USB
-
-On Linux, physical USB device access may require host-level permission configuration.
-
-The stack is:
-
-```text
-Android Device
-      |
-      v
-USB
-      |
-      v
-Linux USB subsystem
-      |
-      v
-udev permissions
-      |
-      v
-ADB
-```
-
-This differs from Emulator KVM access.
-
-KVM permissions concern:
-
-```text
-/dev/kvm
-```
-
-Physical-device permissions concern:
-
-```text
-USB / udev
-```
-
-They are separate host capabilities.
-
----
-
-## macOS USB
-
-macOS normally does not require an additional Android USB driver.
-
-The basic flow is:
-
-```text
-USB cable
-   |
-USB debugging
-   |
-RSA authorization
-   |
-ADB
-```
-
----
-
-## Troubleshooting Authorization
-
-If:
-
-```bash
-adb devices
-```
-
-continues to show:
-
-```text
-unauthorized
-```
-
-try:
-
-```text
-1. Unlock the device.
-2. Check for the RSA debugging prompt.
-3. Disconnect USB.
-4. Revoke USB debugging authorizations.
-5. Reconnect USB.
-6. Accept the new authorization.
-```
-
-ADB can also be restarted:
-
-```bash
-adb kill-server
-adb start-server
-adb devices
-```
-
----
-
-## Responsibility Boundary
-
-Android Environment v0.5 is responsible for:
-
-```text
-Can this workstation reliably identify and communicate with this device?
-```
-
-Android Cookbook remains responsible for:
-
-```text
-What Android commands and behaviors do we exercise after the device is available?
-```
-
-For example:
-
-```text
-Android Environment
-    |
-    └── select ABC123
-            |
-            v
-Android Cookbook
-    |
-    ├── package manager
-    ├── activity manager
-    ├── getprop
-    ├── install APK
-    └── lifecycle tests
-```
-
----
-
-## Key Learning
-
-v0.5 introduces physical identity and trust into Android Environment.
-
-An Emulator can usually be created and owned entirely by the workstation.
-
-A physical Android device has additional concerns:
-
-```text
-physical connection
-USB permission
-user authorization
-device identity
-runtime state
-```
-
-Therefore:
-
-```text
-device plugged in
-```
-
-is not equivalent to:
-
-```text
-device usable
-```
-
-The full state is closer to:
-
-```text
-USB connected
-     |
-     v
-ADB sees transport
-     |
-     v
-RSA authorized
-     |
-     v
-serial selected
-     |
-     v
-device facts validated
-     |
-     v
-READY FOR WORKLOAD
-```
+The 24 cases in [test_physical_device.py](../tests/test_physical_device.py) use fake ADB/Fastboot executables. They cover discovery, emulator exclusion, authorization, selection, property helpers, and script entry points. They do not prove real USB connectivity or bootloader support. See [testing](./testing.md) for current results and remaining coverage.

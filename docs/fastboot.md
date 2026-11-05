@@ -1,272 +1,40 @@
-# Android Environment v0.5 — Fastboot Foundation
+# Fastboot visibility — v0.5.0
 
-## Overview
+ADB checks communicate with Android through `adbd`. Fastboot checks communicate with a device exposing a supported Fastboot interface, such as bootloader Fastboot or fastbootd. Run the checks separately for the device's current mode.
 
-Android SDK Platform-Tools contains two important device interfaces:
+## Check a device
 
-```text
-adb
-fastboot
-```
-
-They operate at different stages of the Android device lifecycle.
-
----
-
-## ADB
-
-ADB normally communicates with a running Android operating system.
-
-```text
-Android OS
-   |
-   v
-adbd
-   |
-   v
-USB / TCP transport
-   |
-   v
-adb client
-```
-
-Typical commands include:
-
-```bash
-adb devices
-adb shell
-adb install
-adb logcat
-```
-
----
-
-## Fastboot
-
-Fastboot communicates with a device in its Bootloader/Fastboot state.
-
-Conceptually:
-
-```text
-Power On
-   |
-   v
-Bootloader
-   |
-   +------ Fastboot interface
-   |
-   v
-Kernel
-   |
-   v
-Android OS
-   |
-   +------ ADB interface
-```
-
-ADB and Fastboot therefore represent different device states.
-
----
-
-## State Model
-
-### Android Running
-
-```text
-Bootloader
-    |
-Kernel
-    |
-Android
-    |
-   ADB
-```
-
-Check:
-
-```bash
-adb devices
-```
-
-### Bootloader / Fastboot
-
-```text
-Bootloader
-    |
- Fastboot
-```
-
-Check:
+Install SDK Platform Tools and put `fastboot` on `PATH`. Manually place the device in its supported Fastboot mode, then run:
 
 ```bash
 fastboot devices
+make fastboot-device-check
+make fastboot-device-check SERIAL=ABC123
 ```
 
-A device normally transitions between these modes rather than exposing both as the same active runtime state.
+The implemented Make target is `fastboot-device-check`. The Makefile also lists `fastboot-check` under `.PHONY`, but that name has no recipe and does not perform a check.
 
----
-
-## v0.5 Safety Boundary
-
-v0.5 only verifies Fastboot visibility.
-
-It does not execute:
-
-```text
-fastboot flashing unlock
-fastboot flash
-fastboot erase
-fastboot format
-```
-
-This version treats Fastboot as a device-state observation mechanism.
-
----
-
-## Checking Fastboot
-
-After manually placing the device in Bootloader/Fastboot mode:
+You can invoke the script directly:
 
 ```bash
-fastboot devices
+./scripts/fastboot_check.sh ABC123
+DEVICE_SERIAL=ABC123 ./scripts/fastboot_check.sh
 ```
 
-Example:
+A nonempty first argument takes precedence over `DEVICE_SERIAL`; an empty argument falls back to it. The script does not read `config/android.env`.
 
-```text
-ABC123    fastboot
-```
+| Input | Behavior |
+| --- | --- |
+| No selected serial | Print all discovered serials; succeed if at least one is listed |
+| Selected serial present | Succeed and report that serial |
+| Selected serial missing | Exit 1 with `Expected Fastboot serial not found` |
+| No devices | Exit 1 with `No Fastboot device found` |
+| Missing command | Exit 1 with `fastboot not found` |
 
-Android Environment provides:
+Unlike automatic ADB selection, multiple Fastboot devices are accepted when no serial is specified. The list helper prints the first field of each nonempty `fastboot devices` row; it does not validate the mode field or identify hardware properties.
 
-```bash
-make fastboot-check
-```
+## Scope and verification
 
-or:
+The script only calls `fastboot devices`. It does not initiate mode transitions, wait for a device, reboot, unlock, flash, erase, or format. A successful result proves visibility to this command, not flashing readiness or ADB authorization.
 
-```bash
-make fastboot-check SERIAL=ABC123
-```
-
----
-
-## Why Fastboot Check Is Separate
-
-The normal Physical Device check expects:
-
-```text
-Android running
-    |
-    v
-ADB
-```
-
-Fastboot check expects:
-
-```text
-Bootloader
-    |
-    v
-Fastboot
-```
-
-Therefore this would be incorrect:
-
-```text
-physical-check
-    |
-ADB must work
-    |
-Fastboot must work
-```
-
-Instead:
-
-```text
-Android Mode
-    |
-    └── physical-check
-
-Bootloader Mode
-    |
-    └── fastboot-check
-```
-
-The tests represent device state rather than requiring mutually exclusive interfaces simultaneously.
-
----
-
-## Future Roadmap
-
-Possible later versions:
-
-```text
-v0.5.1
-Physical Device USB Diagnostics
-    |
-    ├── Linux lsusb
-    ├── udev
-    └── permission diagnostics
-
-v0.5.2
-ADB Authorization Diagnostics
-    |
-    ├── unauthorized
-    ├── offline
-    ├── reconnect
-    └── adb server lifecycle
-
-v0.5.3
-Multi-Device Selection
-    |
-    ├── inventory
-    ├── explicit serial
-    └── deterministic selection
-
-v0.5.4
-Bootloader Transition
-    |
-    ├── adb mode
-    ├── manual/reboot transition
-    ├── wait for fastboot
-    └── return to Android
-
-v0.6+
-Device Provisioning
-    |
-    └── only after the safety model is clearly defined
-```
-
-Flashing, unlocking, and partition mutation should remain outside the basic Physical Device foundation.
-
----
-
-## Key Learning
-
-The important concept is not simply learning another command.
-
-It is learning that an Android device changes control interfaces during its boot lifecycle:
-
-```text
-Bootloader
-    |
-    | fastboot
-    |
-    v
-Kernel
-    |
-    v
-Android
-    |
-    | adb
-    |
-    v
-Application / Test workload
-```
-
-ADB is primarily an Android-runtime interface.
-
-Fastboot is primarily a Bootloader-level interface.
-
-Understanding the difference is foundational for physical Android device infrastructure.
+Fake-tool tests cover presence and absence, explicit serial matching, argument precedence, environment fallback, and script exit messages. Real hardware and mode transitions remain unverified. See [physical devices](./physical-device.md) for Android-mode checks and [testing](./testing.md) for verification results.

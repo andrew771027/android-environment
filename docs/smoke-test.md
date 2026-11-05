@@ -1,4 +1,4 @@
-# Android Environment v0.4.6 — Emulator Smoke Test
+# Android Environment v0.5.0 — Emulator Smoke Test
 
 ## Overview
 
@@ -277,7 +277,7 @@ Serial:
 
 ## CI smoke with cleanup
 
-The CI runner introduced in v0.4.5 is available in v0.4.6 as:
+The CI runner introduced in v0.4.5 is available in v0.5.0 as:
 
 ```bash
 make hosted-emulator-ci

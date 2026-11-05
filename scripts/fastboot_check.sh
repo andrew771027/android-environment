@@ -14,14 +14,14 @@ command_exists fastboot ||
     die "fastboot not found"
 
 
-SERIAL=$"{1:-${DEVICE_SERIAL:-}}"
+SERIAL="${1:-${DEVICE_SERIAL:-}}"
 
 echo "=========================================="
 echo " Fastboot Device Check"
 echo "=========================================="
 echo
 
-device="$(
+devices="$(
     list_fastboot_devices
 )"
 

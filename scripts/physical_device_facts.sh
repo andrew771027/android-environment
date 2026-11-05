@@ -10,7 +10,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${PROJECT_ROOT}/scripts/lib/common.sh"
 source "${PROJECT_ROOT}/scripts/lib/physical_device.sh"
 
-SERIAL=$"{1:-{DEVICE_SERIAL:-}}"
+SERIAL="${1:-${DEVICE_SERIAL:-}}"
 
 if [[ -z "${SERIAL}" ]]; then
 
@@ -46,10 +46,10 @@ echo "Hardware:"
 echo "  Manufacturer: ${manufacturer}"
 echo "  Model:        ${model}"
 echo "  Product:      ${product}"
-echo "  Device:       ${device}"
+echo "  Device:       ${codename}"
 echo
 echo "Android:"
-echo "  Version:      ${android_verison}"
+echo "  Version:      ${android_version}"
 echo "  SDK:          ${sdk}"
 echo
 echo "Build:"
