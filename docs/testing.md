@@ -1,6 +1,6 @@
-# 測試指南 — v0.4.6
+# 測試指南 — v0.5.0
 
-目前原始碼定義 78 個單元與 2 個整合案例。單元測試使用 fake SDK commands、Bash helpers 和暫存 host processes，不需要真實 SDK，也不會啟動 Android emulator。程序案例需要 `ps` 與對測試程序送訊號的權限。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
+目前原始碼定義 102 個單元與 2 個整合案例。單元測試使用 fake SDK commands、Bash helpers 和暫存 host processes，不需要真實 SDK，也不會啟動 Android emulator。程序案例需要 `ps` 與對測試程序送訊號的權限。整合案例需要 SDK、baseline AVD 與完成開機的 emulator。
 
 ## 準備環境
 
@@ -18,17 +18,18 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 
 | 範圍 | 指令 | 案例數 | 需求 |
 | --- | --- | --- | --- |
-| 單元 | `make unit-test` | 78 | Python、pytest、Bash；不需啟動 emulator |
-| 單元詳細輸出 | `python -m pytest -v -m "not integration" tests` | 78 | 同上 |
+| 單元 | `make unit-test` | 102 | Python、pytest、Bash；不需啟動 emulator |
+| 單元詳細輸出 | `python -m pytest -v -m "not integration" tests` | 102 | 同上 |
 | 整合 | `make integration-test` | 2 | SDK、baseline AVD、online emulator |
 | Build Tools helpers | `python -m pytest -v tests/test_build_tools.py` | 6 | 使用暫存檔，不需真實 Build Tools |
 | Smoke helpers / runner | `python -m pytest -v tests/test_smoke.py` | 19 | Fake ADB，不啟動 emulator |
 | Process helpers | `python -m pytest -v tests/test_process.py` | 13 | 可檢查及終止測試程序 |
 | Hosted CI helpers | `python -m pytest -v tests/test_hosted_ci.py` | 8 | Fake SDK 路徑與 KVM 檔案 |
 | CI cleanup | `python -m pytest -v tests/test_ci_cleanup.py` | 7 | Fake scripts、暫存程序 |
-| 全部 | `python -m pytest -v tests` | 80 | 整合案例所需環境 |
+| Physical-device helpers / scripts | `python -m pytest -v tests/test_physical_device.py` | 24 | Fake ADB／Fastboot，不需硬體 |
+| 全部 | `python -m pytest -v tests` | 104 | 整合案例所需環境 |
 
-`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 80 個案例。
+`integration` marker 只分類測試，不會依主機環境自動跳過。Mock 與整合分別通過不代表曾單次執行全部 104 個案例。
 
 ## 單元測試涵蓋範圍
 
@@ -42,6 +43,7 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 | [test_smoke.py](../tests/test_smoke.py) | 19 | 六項檢查、ADB 失敗但輸出有效、runner 成功／失敗 |
 | [test_process.py](../tests/test_process.py) | 13 | 存活判斷、PID parsing、安全值檢查、TERM、KILL fallback、EXIT trap |
 | [test_hosted_ci.py](../tests/test_hosted_ci.py) | 8 | Linux x86_64 限定、SDK root 優先序與缺少值、KVM 檔案存在與存取；不執行 preflight entry point |
+| [test_physical_device.py](../tests/test_physical_device.py) | 24 | ADB discovery、emulator exclusion、authorized／unauthorized／offline、單台與多台 selection、model／SDK、Fastboot presence、三個 script entry points |
 | [test_ci_cleanup.py](../tests/test_ci_cleanup.py) | 7 | 啟動前失敗不 stop、啟動後失敗清理、成功、cleanup failure、保留原錯誤、拒絕無關程序、無 ADB ready 時清理 |
 
 Mock 將假的 `adb`、`emulator` 或 `uname` 放在子程序 `PATH` 最前面。KVM 路徑測試使用一般暫存檔，不是 `/dev/kvm`。Build Tools 案例使用暫存目錄與 `exit 0` executable stubs，不執行真實 binary。Timeout 案例仍會真正 `sleep`。
@@ -67,7 +69,24 @@ make integration-test
 
 AVD listing 與 boot 案例彼此獨立，不能證明正在執行的是設定中的 AVD，也不檢查 headless flags、固定 serial、acceleration 或 shutdown。
 
-## v0.4.6 驗證紀錄
+## v0.5.0 驗證紀錄
+
+2026-11-05，macOS Intel 工作區使用 Python 3.14.8、pytest 9.1.1；Make 選用 `python3`。
+
+| 指令 | 結果 |
+| --- | --- |
+| `python3 -m pytest --collect-only -q tests` | 104 cases：102 unit、2 integration |
+| `make unit-test` | `102 passed, 2 deselected in 51.36s` |
+| `make integration-test` | `2 passed, 102 deselected in 0.24s` |
+| `bash -n` 檢查 `scripts/` 下所有 Shell 腳本 | 35 支全部通過 |
+
+首次沙箱執行 unit 為 `98 passed, 4 failed, 2 deselected`，失敗位於程序清理案例；其中 owned cleanup 明確回報 `/bin/ps: Operation not permitted`。首次 integration 為 `1 passed, 1 failed, 102 deselected`，ADB listing command 失敗。上表的重驗使用允許本機程序與 ADB 存取的權限。Unit 不啟動 Android emulator；整合案例使用既有 emulator，本次未啟動或停止它。
+
+新增的 24 個實機相關案例全都使用 fake tools。涵蓋 Fastboot script 的 positional serial 優先序、空參數回退至 `DEVICE_SERIAL`、缺少裝置與錯誤 serial；ADB check 的自動／指定 serial、authorized／unauthorized／offline；facts script 的自動／指定 serial；以及多台 authorized device helper 拒絕選擇。
+
+尚未實測實機 USB／RSA 授權、真實 Fastboot、網路 ADB、Linux/KVM、Apple Silicon、完整 start／smoke／stop 或新增的 desktop `-gpu software` 啟動。Facts entry point 沒有失敗路徑與全部輸出欄位的 assertions；ADB scripts 的 `DEVICE_SERIAL` fallback、多台選擇的 entry-point 訊息、ADB command 失敗與 CRLF 正規化也未完整涵蓋。既有兩個整合案例僅驗證 emulator，不能作為實機驗證結果。
+
+## v0.4.6 歷史驗證紀錄
 
 2026-10-29，macOS Intel 工作區使用 Python 3.14.8、pytest 9.1.1；Make 選用 `python3`。
 

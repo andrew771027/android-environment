@@ -21,6 +21,9 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	headless-start \
 	headless-status \
 	headless-stop \
+	physical-device-check \
+	physical-device-facts \
+	fastboot-check \
 	doctor \
 	validate \
 	devices \
@@ -84,6 +87,15 @@ headless-status:
 
 headless-stop:
 	./scripts/headless_stop.sh
+
+physical-device-check:
+	./scripts/physical_device_check.sh "$(SERIAL)"
+
+physical-device-facts:
+	./scripts/physical_device_facts.sh "$(SERIAL)"
+
+fastboot-device-check:
+	./scripts/fastboot_check.sh "$(SERIAL)"
 
 doctor:
 	./scripts/doctor.sh

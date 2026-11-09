@@ -1,4 +1,4 @@
-# GitHub hosted emulator CI — v0.4.6
+# GitHub hosted emulator CI — v0.5.0
 
 The [hosted workflow](../.github/workflows/hosted-emulator.yml) provisions an Android API 36 emulator on `ubuntu-24.04` and runs the repository's headless smoke and cleanup scripts. This validates Android runtime capabilities; it does not build or install an APK. Configuration is implemented; a successful remote run must be established from GitHub Actions logs.
 

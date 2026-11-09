@@ -1,6 +1,6 @@
 # Set up macOS
 
-Prepare a macOS host for Android Environment v0.4.6. The SDK target is Android 16 / API 36. Android Studio is optional.
+Prepare a macOS host for Android Environment v0.5.0. The SDK target is Android 16 / API 36. Android Studio is optional.
 
 ## 1. Check the architecture
 
@@ -130,3 +130,7 @@ This installs the configured Build Tools version, defaulting to 36.0.0. It is in
 | Boot times out | Inspect `emulator.log`; the process may still be running |
 
 See [setup](./setup.md) for the SDK version scope, [emulator operation](./emulator.md) for daily commands, and [testing](./testing.md) for test results.
+
+## Physical-device checks in v0.5.0
+
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

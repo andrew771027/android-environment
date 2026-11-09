@@ -1,6 +1,6 @@
 # Android Environment roadmap
 
-目前文件與 `pyproject.toml` 的版本為 **v0.4.6**。已實作表示原始碼存在；實測範圍與限制請見 [testing](./docs/testing.md)。
+目前文件與 `pyproject.toml` 的目標版本為 **v0.5.0**。已實作表示原始碼存在；實測範圍與限制請見 [testing](./docs/testing.md)。
 
 | 版本 | 範圍 | 狀態 |
 | --- | --- | --- |
@@ -13,9 +13,20 @@
 | v0.4.3 | 選用 Build Tools 安裝／驗證、integration-test Make target | 已實作 |
 | v0.4.4 | 六項 runtime smoke checks、headless-smoke | 已實作；不自動停止 emulator |
 | v0.4.5 | 本機 CI runner、PID tracking、owned cleanup、退出碼處理 | 已實作 |
-| **v0.4.6** | **獨立 hosted emulator workflow、Ubuntu 24.04／KVM provisioning、diagnostic artifacts** | **目前版本；78 個單元案例、2 個整合案例；遠端執行尚待驗證** |
-| v0.5 | Physical-device USB detection、ADB authorization、device info、fastboot detection | 計畫中；目前只有工具與手動指南 |
+| v0.4.6 | 獨立 hosted emulator workflow、Ubuntu 24.04／KVM provisioning、diagnostic artifacts | 已實作；遠端執行尚待驗證 |
+| **v0.5.0** | **實機 ADB discovery、authorization、device facts、Fastboot visibility；desktop software GPU** | **目前目標；102 個單元案例、2 個 emulator 整合案例；實機尚待驗證** |
 | v1.0 | 可重現 Mac／Linux workstation、emulator／physical Pixel、health check、CI verification | 長期目標 |
+
+## v0.5.0 範圍
+
+- `make physical-device-check`：自動選擇唯一 authorized non-emulator ADB transport，或以 `SERIAL` 指定；檢查 ADB state。
+- `make physical-device-facts`：列出 serial、manufacturer、model、product、codename、Android version、SDK 與 fingerprint。
+- 三個 scripts 使用非空 positional serial，其次為 `DEVICE_SERIAL`；自動 ADB selection 不包含 `emulator-` prefix，也不驗證 transport 是否為 USB。
+- `make fastboot-device-check`：列出 Fastboot serials，或確認指定 serial；不執行 reboot、unlock 或 flash。
+- 新增 24 個 fake-tool 單元案例。實機 USB／RSA、Fastboot 模式轉換與硬體診斷尚未驗證。
+- Desktop 新啟動預設增加 `-gpu software`，由 `config/android.env` 的 `EMULATOR_NO_GPU_ACCERLATION` 控制；不套用至 reset 或既有 emulator。
+
+使用方式見 [physical devices](./docs/physical-device.md)、[Fastboot](./docs/fastboot.md) 與 [configuration](./docs/configuration.md)。Makefile 的 `.PHONY` 仍列出沒有 recipe 的 `fastboot-check`，實際可執行入口為 `fastboot-device-check`。
 
 ## v0.4.6 範圍
 
@@ -40,10 +51,12 @@
 
 ## 驗證與後續工作
 
-2026-10-29 的執行結果與環境記錄於 [testing](./docs/testing.md)。整合案例使用既有 emulator，只檢查 AVD listing 與 boot completion；不代表完整啟停、owned cleanup 或所有平台已實測。
+2026-11-05 的 v0.5.0 執行結果、環境與歷史紀錄見 [testing](./docs/testing.md)。整合案例使用既有 emulator，只檢查 AVD listing 與 boot completion；不代表完整啟停、owned cleanup 或所有平台已實測。
 
 後續工作包括：
 
+- 真實 USB／RSA 授權與 Fastboot visibility 驗證、Linux USB／udev 診斷、ADB failure／timeout 處理與 facts 完整性檢查。
+- 統一 Fastboot Make target 與 `.PHONY` 宣告；補實機 scripts 的失敗路徑及 Make entry-point 測試。
 - `.github/workflows/ci.yml` 已修正目錄、Python 版本、Action references、unit selection 與 artifact 設定；獨立 emulator workflow 也已設定；仍需確認遠端 unit 與 emulator 執行結果。
 - 修正 `hosted-ci-check` 的環境變數與函式呼叫，並補 entry-point 測試。
 - 在 macOS Intel、Apple Silicon 與 Linux/KVM 驗證真實 start／smoke／stop、開機失敗與 signal 路徑。
@@ -53,4 +66,4 @@
 
 ## Release 狀態
 
-依 [commit manual](./commit_manual.md)，release 需要 source、tests、README、docs、roadmap、project version 與驗證結果一致。版本已為 `0.4.6`；本次文件更新不建立 commit 或 tag。`v0.4.6` tag 應在 release commit 完成後指向該 commit，避免把未收錄的工作區修改誤認為已發布內容。
+依 [commit manual](./commit_manual.md)，release 需要 source、tests、README、docs、roadmap、project version 與驗證結果一致。project version 已為 `0.5.0`；本次文件更新不建立 commit 或 tag。`v0.5.0` tag 應在 release commit 完成後指向該 commit，避免把未收錄的工作區修改誤認為已發布內容。

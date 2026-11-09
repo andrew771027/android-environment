@@ -1,6 +1,6 @@
 # Run a headless emulator
 
-Android Environment v0.4.6 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
+Android Environment v0.5.0 provides `headless-start`, `headless-status`, and `headless-stop` for a single emulator on macOS or Linux x86_64 with KVM. The emulator runs without a window and remains accessible through ADB.
 
 ## Before you start
 

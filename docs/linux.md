@@ -1,6 +1,6 @@
 # Set up Linux
 
-Prepare a Linux host for Android Environment v0.4.6. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
+Prepare a Linux host for Android Environment v0.5.0. These commands use Ubuntu/Debian package names. The headless workflow requires **Linux x86_64 with KVM** and uses Android 16 / API 36.
 
 ## 1. Check the host
 
@@ -188,3 +188,7 @@ This installs the configured Build Tools version, defaulting to 36.0.0. It is in
 | Multiple ADB devices are connected | Use `adb -s SERIAL` |
 
 See [testing](./testing.md) for the checks performed during this documentation update. Mock tests do not verify this host's KVM or emulator behavior.
+
+## Physical-device checks in v0.5.0
+
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

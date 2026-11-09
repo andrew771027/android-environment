@@ -1,6 +1,6 @@
 # Set up Android Environment
 
-This guide covers Android Environment v0.4.6. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
+This guide covers Android Environment v0.5.0. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
 ## SDK target
 
@@ -31,7 +31,7 @@ Use `sdkmanager --list_installed` to record installed revisions. Use `cat "$ANDR
 
 As checked on 2026-09-23, Google marks [`sdkmanager` as deprecated](https://developer.android.com/tools/sdkmanager) and recommends Android CLI's `android sdk` command. This refers to the management tool, not the Android SDK as a whole.
 
-This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.4.6's scope.
+This repository still calls `sdkmanager` and `avdmanager`. Migration to Android CLI is outside v0.5.0's scope.
 
 ## 1. Install host prerequisites
 
@@ -156,3 +156,7 @@ make headless-stop
 Headless stop sends a shutdown request after checking readiness and identity; it does not wait for disconnection. Desktop stop waits up to 30 polling seconds.
 
 For test setup and coverage, see [testing](./testing.md). For physical-device access and day-to-day commands, see the host guides and [emulator guide](./emulator.md).
+
+## Physical-device checks in v0.5.0
+
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

@@ -1,6 +1,6 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.4.6 setup:
+Use these checks at different stages of Android Environment v0.5.0 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
@@ -68,3 +68,7 @@ Replace the serial if the desktop workflow selected a different emulator. Expect
 A status query may exit successfully while reporting stopped or booting. Use the start command's readiness result, or `make emulator-wait` for the desktop workflow, when a step must wait for Android.
 
 The current tests do not exercise the provisioning validator end to end. See [test coverage](./testing.md).
+
+## Check physical hardware
+
+Use `make physical-device-check [SERIAL=ABC123]` for ADB authorization and `make physical-device-facts [SERIAL=ABC123]` to print properties. These checks do not require an emulator. In a supported Fastboot mode, use `make fastboot-device-check [SERIAL=ABC123]` separately. Neither check transitions the device between modes. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).

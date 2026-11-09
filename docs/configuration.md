@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.4.6 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.5.0 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 
@@ -37,6 +37,7 @@ An existing directory is sufficient for the installer to skip installation; it d
 | --- | --- | --- | --- |
 | `EMULATOR_BOOT_TIMEOUT_SECONDS` | `180` | Boot polling budget | Boot polling budget |
 | `EMULATOR_BOOT_POLL_INTERVAL_SECONDS` | `2` | Delay between boot checks | Not used; fixed at 1 second |
+| `EMULATOR_NO_GPU_ACCERLATION` | `true` | Adds `-gpu software` for a newly launched emulator | Not used by the headless launcher |
 | `EMULATOR_NO_SNAPSHOT_LOAD` | `true` | Adds `-no-snapshot-load` on start | Not used; start always uses `-no-snapshot` |
 | `EMULATOR_NO_BOOT_ANIMATION` | `true` | Adds `-no-boot-anim` on start | Not used; flag is always enabled |
 | `EMULATOR_PORT` | `5554` | Not used | Not read; launcher hardcodes port 5554 |
@@ -81,3 +82,9 @@ If a future change adjusts the API level, update both `ANDROID_API_LEVEL` and th
 AVD creation checks for an existing name; it does not repair an existing AVD after a configuration change. The integration test also hardcodes `cookbook_pixel_api_36`, so changes to the AVD name require a matching test change.
 
 This release retains API 36 and the existing SDK management tools. See [setup](./setup.md) for the target and migration scope.
+
+## Physical-device serial selection
+
+`physical-device-check`, `physical-device-facts`, and `fastboot-device-check` forward Make's `SERIAL` argument to their scripts. A nonempty positional serial takes precedence over the `DEVICE_SERIAL` environment variable. With neither set, ADB commands require exactly one authorized non-emulator transport; Fastboot lists all visible serials. These scripts do not source `config/android.env`. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
+
+`EMULATOR_NO_GPU_ACCERLATION` uses the spelling currently in source. Edit it in `config/android.env`; its unconditional assignment overwrites an environment value. Desktop reset does not read this toggle.

@@ -67,6 +67,14 @@ else
         -avd "${AVD_NAME}"
     )
 
+    if [[ "${EMULATOR_NO_GPU_ACCERLATION}" == "true" ]]; then
+
+        EMULATOR_ARGS+=(
+            -gpu software
+        )
+
+    fi
+
     if [[ "${EMULATOR_NO_SNAPSHOT_LOAD}" == "true" ]]; then
 
         EMULATOR_ARGS+=(
