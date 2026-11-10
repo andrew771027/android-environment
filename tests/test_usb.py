@@ -133,7 +133,7 @@ def test_linux_user_in_plugdev(
     env["PATH"] = f"{bin_dir}:{env['PATH']}"
 
     result = run_bash(
-        "linux_userin_plugdev",
+        "linux_user_in_plugdev",
         env=env,
     )
 
