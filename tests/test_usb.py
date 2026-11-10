@@ -20,7 +20,7 @@ def make_fake_command(
         encoding="utf-8"
     )
 
-    patch.chmod(0o755)
+    path.chmod(0o755)
 
     return path
 
