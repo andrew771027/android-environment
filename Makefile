@@ -24,6 +24,7 @@ PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 	physical-device-check \
 	physical-device-facts \
 	fastboot-check \
+	usb-diagnostics \
 	doctor \
 	validate \
 	devices \
@@ -96,6 +97,9 @@ physical-device-facts:
 
 fastboot-device-check:
 	./scripts/fastboot_check.sh "$(SERIAL)"
+
+usb-diagnostics:
+	./scripts/usb_diagnostics.sh
 
 doctor:
 	./scripts/doctor.sh
