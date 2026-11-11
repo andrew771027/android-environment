@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 LIB = ROOT / "scripts" / "lib" / "usb.sh"
 
+
 def make_fake_command(
     bin_dir: Path,
     name: str,
@@ -14,20 +15,17 @@ def make_fake_command(
 
     path = bin_dir / name
 
-    path.write_text(
-        "!/usr/bin/env bash\n"
-        f"{body}\n",
-        encoding="utf-8"
-    )
+    path.write_text("!/usr/bin/env bash\n" f"{body}\n", encoding="utf-8")
 
     path.chmod(0o755)
 
     return path
 
+
 def run_bash(
     command: str,
     *,
-    env:dict[str, str] | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
 
     return subprocess.run(
@@ -42,6 +40,7 @@ def run_bash(
         check=False,
         timeout=10,
     )
+
 
 def test_linux_lsusb_available(
     tmp_path: Path,
@@ -65,6 +64,7 @@ def test_linux_lsusb_available(
     )
 
     assert result.returncode == 0
+
 
 def test_linux_lsusb_missing(
     tmp_path: Path,
@@ -92,6 +92,7 @@ def test_linux_lsusb_missing(
 
     assert result.returncode != 0
 
+
 def test_linux_usb_devices(
     tmp_path: Path,
 ):
@@ -116,6 +117,7 @@ def test_linux_usb_devices(
     assert result.returncode == 0
     assert "Google Inc." in result.stdout
 
+
 def test_linux_user_in_plugdev(
     tmp_path: Path,
 ):
@@ -139,9 +141,8 @@ def test_linux_user_in_plugdev(
 
     assert result.returncode == 0
 
-def test_linux_user_not_in_plugdev(
-    tmp_path: Path
-):
+
+def test_linux_user_not_in_plugdev(tmp_path: Path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
 
@@ -161,6 +162,7 @@ def test_linux_user_not_in_plugdev(
 
     assert result.returncode != 0
 
+
 def test_linux_android_udev_rule_present(
     tmp_path: Path,
 ):
@@ -172,17 +174,10 @@ def test_linux_android_udev_rule_present(
 
     rule = lib_dir / "51-android.rules"
 
-    rule.write_text(
-        '# Android device rules\n',
-        encoding="utf-8"
-    )
+    rule.write_text("# Android device rules\n", encoding="utf-8")
 
-    result = run_bash(
-        (
-            "linux_android_udev_rules_present "
-            f'"{lib_dir}" "{etc_dir}"'
-        )
-    )
+    result = run_bash(("linux_android_udev_rules_present " f'"{lib_dir}" "{etc_dir}"'))
+
 
 def test_linux_android_udev_rule_missing(
     tmp_path: Path,
@@ -194,14 +189,10 @@ def test_linux_android_udev_rule_missing(
     lib_dir.mkdir()
     etc_dir.mkdir()
 
-    result = run_bash(
-        (
-            "linux_android_udev_rules_present "
-            f'"{lib_dir}" "{etc_dir}"'
-        )
-    )
+    result = run_bash(("linux_android_udev_rules_present " f'"{lib_dir}" "{etc_dir}"'))
 
     assert result.returncode != 0
+
 
 def test_macos_system_profiler_available(
     tmp_path: Path,
@@ -225,6 +216,7 @@ def test_macos_system_profiler_available(
     )
 
     assert result.returncode == 0
+
 
 def test_macos_usb_devices(
     tmp_path: Path,
@@ -254,26 +246,23 @@ def test_macos_usb_devices(
     assert result.returncode == 0
     assert "Android USB Device" in result.stdout
 
-def test_linux_host_supported():
-
-    result = run_bash(
-        'usb_host_supported "linux"'
-    )
-
-    assert result.returncode == 0
 
 def test_linux_host_supported():
 
-    result = run_bash(
-        'usb_host_supported "darwin"'
-    )
+    result = run_bash('usb_host_supported "linux"')
 
     assert result.returncode == 0
+
+
+def test_linux_host_supported():
+
+    result = run_bash('usb_host_supported "darwin"')
+
+    assert result.returncode == 0
+
 
 def test_windows_not_supported_in_v051():
 
-    result = run_bash(
-        'usb_host_supported "windows"'
-    )
+    result = run_bash('usb_host_supported "windows"')
 
     assert result.returncode != 0
