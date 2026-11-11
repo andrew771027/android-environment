@@ -1,6 +1,6 @@
 # Set up Android Environment
 
-This guide covers Android Environment v0.5.0. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
+This guide covers Android Environment v0.5.1. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
 ## SDK target
 

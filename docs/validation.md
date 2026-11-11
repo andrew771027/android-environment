@@ -1,6 +1,6 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.5.0 setup:
+Use these checks at different stages of Android Environment v0.5.1 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
@@ -72,3 +72,9 @@ The current tests do not exercise the provisioning validator end to end. See [te
 ## Check physical hardware
 
 Use `make physical-device-check [SERIAL=ABC123]` for ADB authorization and `make physical-device-facts [SERIAL=ABC123]` to print properties. These checks do not require an emulator. In a supported Fastboot mode, use `make fastboot-device-check [SERIAL=ABC123]` separately. Neither check transitions the device between modes. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
+
+## Check host USB visibility (v0.5.1 draft)
+
+`make usb-diagnostics` is registered, but currently fails with permission denied. Its script is also incomplete (`bash -n scripts/usb_diagnostics.sh` fails), so invoking it through Bash is not a workaround. This command is not a validation gate.
+
+For manual inspection, run `lsusb` on Linux or `system_profiler SPUSBDataType` on macOS, then compare the USB listing with `adb devices`. A USB entry does not establish ADB authorization. See [USB diagnostics](./usb-diagnostics.md) for implementation defects and test limits.

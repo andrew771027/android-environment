@@ -1,4 +1,4 @@
-# Fastboot visibility — v0.5.0
+# Fastboot visibility — v0.5.1
 
 ADB checks communicate with Android through `adbd`. Fastboot checks communicate with a device exposing a supported Fastboot interface, such as bootloader Fastboot or fastbootd. Run the checks separately for the device's current mode.
 

@@ -1,8 +1,10 @@
-# Android Environment v0.5.0
+# Android Environment v0.5.1
 
 Set up an Android SDK and emulator for Android Cookbook from the command line. Android Studio is optional.
 
-Version 0.5.0 adds physical-device discovery, ADB authorization checks, device facts, and read-only Fastboot detection. Commands select one authorized non-emulator ADB transport automatically or accept an explicit serial. Desktop startup also enables software GPU rendering by default. Desktop, headless, hosted emulator CI, and optional Build Tools workflows remain available.
+Version 0.5.1 adds draft host USB helpers and a `make usb-diagnostics` target. The entry point is currently incomplete and cannot run; use the manual commands in [USB diagnostics](./docs/usb-diagnostics.md). Unit results do not establish that this command works.
+
+Version 0.5.0 introduced physical-device discovery, ADB authorization checks, device facts, and read-only Fastboot detection. Commands select one authorized non-emulator ADB transport automatically or accept an explicit serial. Desktop startup also enables software GPU rendering by default. Desktop, headless, hosted emulator CI, and optional Build Tools workflows remain available.
 
 ## SDK target
 
@@ -114,6 +116,7 @@ After manually entering a supported Fastboot mode, use `make fastboot-device-che
 | `make physical-device-check [SERIAL=ABC123]` | Check the selected ADB transport is authorized |
 | `make physical-device-facts [SERIAL=ABC123]` | Print identity, Android version, SDK, and build fingerprint |
 | `make fastboot-device-check [SERIAL=ABC123]` | List Fastboot serials or require a selected serial |
+| `make usb-diagnostics` | Draft USB diagnostic entry point; currently blocked by permissions and incomplete syntax |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
 | `make unit-test` | Run tests that do not require a real SDK or emulator |
@@ -141,13 +144,13 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 make unit-test
 ```
 
-The source defines 102 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
+Pytest collects 113 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
 
 ```bash
 make integration-test
 ```
 
-See [testing](./docs/testing.md) for the v0.5.0 verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
+See [testing](./docs/testing.md) for the v0.5.1 verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -180,6 +183,7 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 | Prepare APK build tools | [Build Tools](./docs/build-tools.md) |
 | Understand Gradle and APK builds | [Gradle APK lifecycle](./docs/gradle-apk-lifecycle.md) |
 | Check emulator runtime | [Smoke test](./docs/smoke-test.md) |
+| Diagnose host USB visibility | [USB diagnostics](./docs/usb-diagnostics.md) |
 | Connect physical hardware | [Physical devices](./docs/physical-device.md), [Fastboot](./docs/fastboot.md) |
 | Run tests | [Testing](./docs/testing.md) |
 | Run CI smoke and understand cleanup | [CI and cleanup](./docs/ci-cleanup.md) |

@@ -1,6 +1,10 @@
-# Physical devices — v0.5.0
+# Physical devices — v0.5.1
 
 Use the physical-device commands to select an ADB transport, check authorization, and read device facts. They require SDK Platform Tools on `PATH`; they do not require an AVD or emulator acceleration. Run commands from the repository root.
+
+## Host USB visibility
+
+If ADB does not list the phone, inspect host USB visibility first: `lsusb` on Linux or `system_profiler SPUSBDataType` on macOS. The v0.5.1 `make usb-diagnostics` entry point is incomplete and currently unusable. See [USB diagnostics](./usb-diagnostics.md) for manual checks and known defects.
 
 ## Connect and check
 

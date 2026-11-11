@@ -1,6 +1,6 @@
 # Android Environment roadmap
 
-目前文件與 `pyproject.toml` 的目標版本為 **v0.5.0**。已實作表示原始碼存在；實測範圍與限制請見 [testing](./docs/testing.md)。
+目前文件與 `pyproject.toml` 的目標版本為 **v0.5.1**。已實作表示原始碼存在；實測範圍與限制請見 [testing](./docs/testing.md)。
 
 | 版本 | 範圍 | 狀態 |
 | --- | --- | --- |
@@ -14,8 +14,18 @@
 | v0.4.4 | 六項 runtime smoke checks、headless-smoke | 已實作；不自動停止 emulator |
 | v0.4.5 | 本機 CI runner、PID tracking、owned cleanup、退出碼處理 | 已實作 |
 | v0.4.6 | 獨立 hosted emulator workflow、Ubuntu 24.04／KVM provisioning、diagnostic artifacts | 已實作；遠端執行尚待驗證 |
-| **v0.5.0** | **實機 ADB discovery、authorization、device facts、Fastboot visibility；desktop software GPU** | **目前目標；102 個單元案例、2 個 emulator 整合案例；實機尚待驗證** |
+| v0.5.0 | 實機 ADB discovery、authorization、device facts、Fastboot visibility；desktop software GPU | 已實作；實機尚待驗證 |
+| **v0.5.1** | **Host USB diagnostics helpers 與 Make 入口** | **目前目標；入口未完成、不可執行；113 個收集到的單元案例、2 個 emulator 整合案例** |
 | v1.0 | 可重現 Mac／Linux workstation、emulator／physical Pixel、health check、CI verification | 長期目標 |
+
+## v0.5.1 範圍與待完成項目
+
+- 新增 `scripts/lib/usb.sh`：Linux `lsusb`、plugdev、udev filename checks；macOS `system_profiler`；host support helper。
+- 新增 `make usb-diagnostics`，但 script 缺少執行權限、結尾語法未完成，logging functions 未定義；udev helper 的 `retrun` 亦需修正。
+- USB 測試收集 11 個案例；缺少 assertion、`PATh` 拼字錯誤與重複測試名稱使綠燈不足以證明功能正確。
+- 修正上述缺陷、補入口測試與真實 Linux／macOS USB 驗證後，才能將 USB 診斷列為可用功能。
+
+操作與限制見 [USB diagnostics](./docs/usb-diagnostics.md)，本次結果見 [testing](./docs/testing.md)。
 
 ## v0.5.0 範圍
 
@@ -55,7 +65,7 @@
 
 後續工作包括：
 
-- 真實 USB／RSA 授權與 Fastboot visibility 驗證、Linux USB／udev 診斷、ADB failure／timeout 處理與 facts 完整性檢查。
+- 真實 USB／RSA 授權與 Fastboot visibility 驗證、完成 Linux USB／udev 診斷、ADB failure／timeout 處理與 facts 完整性檢查。
 - 統一 Fastboot Make target 與 `.PHONY` 宣告；補實機 scripts 的失敗路徑及 Make entry-point 測試。
 - `.github/workflows/ci.yml` 已修正目錄、Python 版本、Action references、unit selection 與 artifact 設定；獨立 emulator workflow 也已設定；仍需確認遠端 unit 與 emulator 執行結果。
 - 修正 `hosted-ci-check` 的環境變數與函式呼叫，並補 entry-point 測試。
@@ -66,4 +76,4 @@
 
 ## Release 狀態
 
-依 [commit manual](./commit_manual.md)，release 需要 source、tests、README、docs、roadmap、project version 與驗證結果一致。project version 已為 `0.5.0`；本次文件更新不建立 commit 或 tag。`v0.5.0` tag 應在 release commit 完成後指向該 commit，避免把未收錄的工作區修改誤認為已發布內容。
+依 [commit manual](./commit_manual.md)，release 需要 source、tests、README、docs、roadmap、project version 與驗證結果一致。工作區 project version 已為 `0.5.1`；本次文件更新不建立 commit 或 tag。`v0.5.1` tag 應在 release commit 完成後指向該 commit，避免把未收錄的工作區修改誤認為已發布內容。
