@@ -104,3 +104,4 @@ case "${HOST_OS}" in
             die "system_profiler not found"
         
         fi
+esac
