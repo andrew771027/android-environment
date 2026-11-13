@@ -266,3 +266,50 @@ def test_windows_not_supported_in_v051():
     result = run_bash('usb_host_supported "windows"')
 
     assert result.returncode != 0
+
+def test_usb_diagnostics_linux_entrypoint(tmp_path: Path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+
+    make_fake_command(
+        bin_dir,
+        "uname",
+        '''
+if [[ "$1" == "-s" ]]; then
+    echo Linux
+elif [[ "$1" == "-m" ]]; then
+    echo x86_64
+fi
+''',
+    )
+
+    make_fake_command(
+        bin_dir,
+        "lsusb",
+        'echo "Bus 001 Device 004: ID 18d1:4ee7 Google Inc."',
+    )
+
+    make_fake_command(
+        bin_dir,
+        "id",
+        'echo "user docker plugdev"',
+    )
+
+    env = os.environ.copy()
+    env["PATH"] = f"{bin_dir}:{env['PATH']}"
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "usb_diagnostics.sh"),
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=10,
+    )
+
+    assert result.returncode == 0
+    assert "Android Physical USB Diagnostics" in result.stdout
+    assert "Google Inc." in result.stdout
