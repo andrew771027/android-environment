@@ -86,9 +86,9 @@ AVD listing 與 boot 案例彼此獨立，不能證明正在執行的是設定�
 
 首次沙箱 unit 為 `4 failed, 109 passed, 2 deselected in 64.50s`；失敗集中於 process／owned cleanup，且 owned cleanup 回報 `/bin/ps: Operation not permitted`。首次 integration 為 `1 failed, 1 passed, 113 deselected in 1.27s`，失敗於 `adb devices` 非零退出碼。Unit 重驗使用允許檢查及終止自身暫存程序的權限，不啟動 emulator。上述 integration 重驗使用允許本機 ADB 存取的權限，使用既有 emulator，未啟動或停止它。
 
-USB 測試全綠仍有明確限制：rule-present case 沒有 assertions；negative group case 設定 `PATh` 而不是 `PATH`；重複的 `test_linux_host_supported` 使 Linux case 被 Darwin case 覆蓋；fake commands 的 shebang 缺少 `#`。因此實際只收集 11 個 USB cases，沒有證明 Linux support、rule-present 或 negative group 的預期分支正確。測試也沒有執行 USB script／Make 入口。
+USB 測試全綠仍有明確限制：rule-present case 沒有 assertions；negative group case 設定 `PATH` 而不是 `PATH`；重複的 `test_linux_host_supported` 使 Linux case 被 Darwin case 覆蓋；fake commands 的 shebang 缺少 `#`。因此實際只收集 11 個 USB cases，沒有證明 Linux support、rule-present 或 negative group 的預期分支正確。測試也沒有執行 USB script／Make 入口。
 
-原始碼的 udev helper 使用 `retrun 0`；USB script 不完整、缺少執行權限且呼叫未定義的 logging functions。這些是功能缺陷，不是沙箱限制；詳見 [USB diagnostics](./usb-diagnostics.md)。本次僅更新文件，未修正 source／tests。未驗證真實 USB、Linux udev／plugdev、RSA、Fastboot、完整 emulator lifecycle、Gradle 或 APK 安裝。
+原始碼的 udev helper 使用 `return 0`；USB script 不完整、缺少執行權限且呼叫未定義的 logging functions。這些是功能缺陷，不是沙箱限制；詳見 [USB diagnostics](./usb-diagnostics.md)。本次僅更新文件，未修正 source／tests。未驗證真實 USB、Linux udev／plugdev、RSA、Fastboot、完整 emulator lifecycle、Gradle 或 APK 安裝。
 
 ## v0.5.0 歷史驗證紀錄
 

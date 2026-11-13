@@ -21,7 +21,7 @@
 ## v0.5.1 範圍與待完成項目
 
 - 新增 `scripts/lib/usb.sh`：Linux `lsusb`、plugdev、udev filename checks；macOS `system_profiler`；host support helper。
-- 新增 `make usb-diagnostics`，但 script 缺少執行權限、結尾語法未完成，logging functions 未定義；udev helper 的 `retrun` 亦需修正。
+- 新增 `make usb-diagnostics`，但 script 缺少執行權限、結尾語法未完成，logging functions 未定義；udev helper 的 `return` 亦需修正。
 - USB 測試收集 11 個案例；缺少 assertion、`PATh` 拼字錯誤與重複測試名稱使綠燈不足以證明功能正確。
 - 修正上述缺陷、補入口測試與真實 Linux／macOS USB 驗證後，才能將 USB 診斷列為可用功能。
 

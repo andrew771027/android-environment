@@ -7,6 +7,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 source "${PROJECT_ROOT}/config/android.env"
 source "${PROJECT_ROOT}/scripts/lib/platform.sh"
+source "${PROJECT_ROOT}/scripts/lib/common.sh"
 source "${PROJECT_ROOT}/scripts/lib/usb.sh"
 
 HOST_OS="$(detect_os)"

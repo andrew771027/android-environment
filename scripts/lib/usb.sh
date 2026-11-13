@@ -39,7 +39,7 @@ linux_android_udev_rules_present(){
         "${etc_dir}"/*android*.rules
     do
 
-        [[ -e "${rule}" ]] && retrun 0
+        [[ -e "${rule}" ]] && return 0
     
     done
 

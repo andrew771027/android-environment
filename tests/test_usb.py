@@ -153,7 +153,7 @@ def test_linux_user_not_in_plugdev(tmp_path: Path):
     )
 
     env = os.environ.copy()
-    env["PATh"] = f"{bin_dir}:{env['PATH']}"
+    env["PATH"] = f"{bin_dir}:{env['PATH']}"
 
     result = run_bash(
         "linux_user_in_plugdev",
@@ -254,7 +254,7 @@ def test_linux_host_supported():
     assert result.returncode == 0
 
 
-def test_linux_host_supported():
+def test_macos_host_supported():
 
     result = run_bash('usb_host_supported "darwin"')
 

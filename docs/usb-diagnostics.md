@@ -9,7 +9,7 @@ The Makefile registers `make usb-diagnostics`, but the command is currently unus
 - `scripts/usb_diagnostics.sh` is tracked as mode `100644`, so Make fails with permission denied.
 - The script ends inside the macOS branch without closing the `case`; `bash -n` reports unexpected end of file. Running it with Bash does not fix this.
 - The script calls `log_error`, `log_ok`, `log_warn`, and `die`, but neither sourced file defines these functions.
-- `linux_android_udev_rules_present` calls `retrun 0` instead of `return 0`. A matching rule therefore triggers a command error and the helper eventually returns 1.
+- `linux_android_udev_rules_present` calls `return 0` instead of `return 0`. A matching rule therefore triggers a command error and the helper eventually returns 1.
 
 The script contains a Linux diagnostic sequence and the beginning of a macOS branch. It does not implement the successful macOS report shown in the earlier draft. There is no completed unsupported-host branch. These defects must be fixed and the entry point tested before describing this command as available.
 
@@ -67,8 +67,8 @@ Replace `ABC123` with the ADB serial. An `unauthorized` entry requires accepting
 
 The coverage has material gaps:
 
-- The rule-present case has no assertions, so it passes despite the `retrun` defect.
-- The negative group case sets `PATh` instead of `PATH`, so its fake `id` is not selected and the result depends on the host's groups.
+- The rule-present case has no assertions, so it passes despite the `return` defect.
+- The negative group case sets `PATH` instead of `PATH`, so its fake `id` is not selected and the result depends on the host's groups.
 - Two functions are named `test_linux_host_supported`; Python replaces the Linux case with the later Darwin case. Only Darwin and Windows host checks are collected.
 - Fake command files begin with `!/usr/bin/env bash`, missing the shebang's `#`. Their execution relies on Bash fallback and is not evidence of valid standalone scripts.
 - Missing `system_profiler`, command failures, and the completed entry-point flow are not covered.
