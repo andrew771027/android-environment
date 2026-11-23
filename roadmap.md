@@ -15,26 +15,26 @@
 | v0.4.5 | 本機 CI runner、PID tracking、owned cleanup、退出碼處理 | 已實作 |
 | v0.4.6 | 獨立 hosted emulator workflow、Ubuntu 24.04／KVM provisioning、diagnostic artifacts | 已實作；遠端執行尚待驗證 |
 | v0.5.0 | 實機 ADB discovery、authorization、device facts、Fastboot visibility；desktop software GPU | 已實作；實機尚待驗證 |
-| **v0.5.1** | **Host USB diagnostics helpers 與 Make 入口** | **目前目標；入口未完成、不可執行；113 個收集到的單元案例、2 個 emulator 整合案例** |
+| **v0.5.1** | **Host USB diagnostics helpers 與 Make 入口** | **目前目標；Linux 入口已實作，macOS 入口只檢查工具；115 個收集到的單元案例、2 個 emulator 整合案例** |
 | v1.0 | 可重現 Mac／Linux workstation、emulator／physical Pixel、health check、CI verification | 長期目標 |
 
 ## v0.5.1 範圍與待完成項目
 
 - 新增 `scripts/lib/usb.sh`：Linux `lsusb`、plugdev、udev filename checks；macOS `system_profiler`；host support helper。
-- 新增 `make usb-diagnostics`，但 script 缺少執行權限、結尾語法未完成，logging functions 未定義；udev helper 的 `return` 亦需修正。
-- USB 測試收集 11 個案例；缺少 assertion、`PATh` 拼字錯誤與重複測試名稱使綠燈不足以證明功能正確。
-- 修正上述缺陷、補入口測試與真實 Linux／macOS USB 驗證後，才能將 USB 診斷列為可用功能。
+- `make usb-diagnostics` 在 Linux 列出 USB 裝置並檢查 plugdev 與 udev 規則檔名。在 macOS 檢查 `system_profiler` 是否存在。
+- USB 測試收集 13 個案例，包含模擬 Linux 入口。待補 macOS 的 USB 清單輸出、udev 規則存在測試的回傳值斷言，以及實機驗證。
 
-操作與限制見 [USB diagnostics](./docs/usb-diagnostics.md)，本次結果見 [testing](./docs/testing.md)。
+macOS 手動列出 USB 裝置的指令與各平台限制見 [USB diagnostics](./docs/usb-diagnostics.md)，本次結果見 [testing](./docs/testing.md)。SDK migration 不在此版本範圍內。
 
 ## v0.5.0 範圍
 
-- `make physical-device-check`：自動選擇唯一 authorized non-emulator ADB transport，或以 `SERIAL` 指定；檢查 ADB state。
+- `make physical-device-check SERIAL=`（未設定 `DEVICE_SERIAL` 時）：自動選擇唯一 authorized non-emulator ADB transport，或以 `SERIAL` 指定；檢查 ADB state。
 - `make physical-device-facts`：列出 serial、manufacturer、model、product、codename、Android version、SDK 與 fingerprint。
 - 三個 scripts 使用非空 positional serial，其次為 `DEVICE_SERIAL`；自動 ADB selection 不包含 `emulator-` prefix，也不驗證 transport 是否為 USB。
-- `make fastboot-check SERIAL=`：列出 Fastboot serials，或確認指定 serial；不執行 reboot、unlock 或 flash。
+- `make fastboot-check SERIAL=`（未設定 `DEVICE_SERIAL` 時）：列出 Fastboot serials；用 `SERIAL=ABC123` 確認指定 serial；不執行 reboot、unlock 或 flash。
 - 新增 24 個 fake-tool 單元案例。實機 USB／RSA、Fastboot 模式轉換與硬體診斷尚未驗證。
 - Desktop 新啟動預設增加 `-gpu software`，由 `config/android.env` 的 `EMULATOR_NO_GPU_ACCERLATION` 控制；不套用至 reset 或既有 emulator。
+- 延續 desktop、headless、hosted emulator CI 與選用 Build Tools 流程。
 
 使用方式見 [physical devices](./docs/physical-device.md)、[Fastboot](./docs/fastboot.md) 與 [configuration](./docs/configuration.md)。Makefile 的 `.PHONY` 仍列出沒有 recipe 的 `fastboot-check`，實際可執行入口為 `fastboot-check`。
 
@@ -65,8 +65,8 @@
 
 後續工作包括：
 
-- 真實 USB／RSA 授權與 Fastboot visibility 驗證、完成 Linux USB／udev 診斷、ADB failure／timeout 處理與 facts 完整性檢查。
-- 統一 Fastboot Make target 與 `.PHONY` 宣告；補實機 scripts 的失敗路徑及 Make entry-point 測試。
+- 真實 USB／RSA 授權與 Fastboot visibility 驗證、完成 macOS USB 清單輸出、ADB failure／timeout 處理與 facts 完整性檢查。
+- 補實機 scripts 的失敗路徑及 Make entry-point 測試。
 - `.github/workflows/ci.yml` 已修正目錄、Python 版本、Action references、unit selection 與 artifact 設定；獨立 emulator workflow 也已設定；仍需確認遠端 unit 與 emulator 執行結果。
 - 修正 `hosted-ci-check` 的環境變數與函式呼叫，並補 entry-point 測試。
 - 在 macOS Intel、Apple Silicon 與 Linux/KVM 驗證真實 start／smoke／stop、開機失敗與 signal 路徑。

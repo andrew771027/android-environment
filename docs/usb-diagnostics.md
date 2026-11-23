@@ -4,14 +4,9 @@ Host USB visibility is a separate check from ADB transport and RSA authorization
 
 ## Current implementation status
 
-The Makefile registers `make usb-diagnostics`, but the command is currently unusable:
+Run `make usb-diagnostics` to invoke the diagnostic script. On Linux, it lists USB devices and reports `plugdev` membership and Android-related udev rule filenames. It exits with status 1 if `lsusb` is missing.
 
-- `scripts/usb_diagnostics.sh` is tracked as mode `100644`, so Make fails with permission denied.
-- The script ends inside the macOS branch without closing the `case`; `bash -n` reports unexpected end of file. Running it with Bash does not fix this.
-- The script calls `log_error`, `log_ok`, `log_warn`, and `die`, but neither sourced file defines these functions.
-- `linux_android_udev_rules_present` calls `return 0` instead of `return 0`. A matching rule therefore triggers a command error and the helper eventually returns 1.
-
-The script contains a Linux diagnostic sequence and the beginning of a macOS branch. It does not implement the successful macOS report shown in the earlier draft. There is no completed unsupported-host branch. These defects must be fixed and the entry point tested before describing this command as available.
+On macOS, the script prints the host OS and checks for `system_profiler`. When the command is available, the script exits successfully without listing USB devices. Use the manual macOS command below to inspect the USB hardware tree. The script has no explicit branch for unsupported hosts.
 
 ## Manual host checks
 
@@ -30,7 +25,7 @@ Compare the USB listing before and after connecting the phone. If `lsusb` is mis
 sudo apt install usbutils
 ```
 
-The Linux script also intends to check exact membership in `plugdev` and Android-related rule filenames in `/lib/udev/rules.d` and `/etc/udev/rules.d`. Its suggested Ubuntu/Debian recovery commands are:
+The Linux script also checks exact membership in `plugdev` and Android-related rule filenames in `/lib/udev/rules.d` and `/etc/udev/rules.d`. Its suggested Ubuntu/Debian recovery commands are:
 
 ```bash
 sudo usermod -aG plugdev "$LOGNAME"
@@ -39,7 +34,7 @@ sudo apt install android-sdk-platform-tools-common
 
 Apply host administration changes according to your workstation policy; these are suggestions printed by the source, not repairs performed by the repository. Log out and back in after changing groups. Group names and package choices depend on the distribution.
 
-The rule helper only looks for existing paths matching `*android*.rules`. Even after correcting its typo, this would not verify rule contents, vendor coverage, loaded rules, or effective device permissions. USB permissions and `/dev/kvm` permissions are separate concerns.
+The rule helper only looks for existing paths matching `*android*.rules`. This does not verify rule contents, vendor coverage, loaded rules, or effective device permissions. USB permissions and `/dev/kvm` permissions are separate concerns.
 
 ### macOS
 
@@ -47,7 +42,7 @@ The rule helper only looks for existing paths matching `*android*.rules`. Even a
 system_profiler SPUSBDataType
 ```
 
-Inspect the USB hardware tree for the connected device. The helper invokes this command directly; the entry script does not yet reach a completed macOS diagnostic flow. Linux `plugdev` and udev checks do not apply here.
+Inspect the USB hardware tree for the connected device. The macOS listing helper invokes this command directly. The entry script currently only checks command availability. Linux `plugdev` and udev checks do not apply here.
 
 ## Continue with ADB
 
@@ -63,14 +58,10 @@ Replace `ABC123` with the ADB serial. An `unauthorized` entry requires accepting
 
 ## Helper tests and limits
 
-[tests/test_usb.py](../tests/test_usb.py) collects 11 cases using fake `lsusb`, `id`, and `system_profiler` commands and temporary rule directories. It does not invoke the diagnostic script or the Make target and does not use real USB hardware.
+[tests/test_usb.py](../tests/test_usb.py) collects 13 cases using fake commands and temporary rule directories. It covers the USB helper’s support checks for Linux, macOS, and Windows, as well as the Linux entry point invoked through Bash with simulated USB output.
 
-The coverage has material gaps:
+- The rule-present case creates a matching file but does not assert the helper's return code.
+- Fake commands still lack the leading `#` in their shebang and rely on Bash fallback.
+- The suite does not invoke the Make target or cover the macOS entry point, missing `system_profiler`, or USB listing command failures.
 
-- The rule-present case has no assertions, so it passes despite the `return` defect.
-- The negative group case sets `PATH` instead of `PATH`, so its fake `id` is not selected and the result depends on the host's groups.
-- Two functions are named `test_linux_host_supported`; Python replaces the Linux case with the later Darwin case. Only Darwin and Windows host checks are collected.
-- Fake command files begin with `!/usr/bin/env bash`, missing the shebang's `#`. Their execution relies on Bash fallback and is not evidence of valid standalone scripts.
-- Missing `system_profiler`, command failures, and the completed entry-point flow are not covered.
-
-See [testing](./testing.md) for current execution results. The two existing integration tests check an emulator, not USB. Real Linux and macOS USB visibility, permissions, RSA authorization, and Fastboot checks remain unverified for v0.5.1.
+All 13 cases passed in the local check. On macOS, `make usb-diagnostics` exited successfully after printing the host OS. Real USB visibility, Linux device permissions, and ADB authorization were not verified.

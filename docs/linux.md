@@ -184,11 +184,11 @@ This installs the configured Build Tools version, defaulting to 36.0.0. It is in
 | `sdkmanager` is missing | Check the extracted directory layout and reload the shell configuration |
 | SDK package or AVD is missing | Run `make install-sdk`, `make create-avd`, and `make validate` |
 | KVM check fails | Check device access and [acceleration diagnostics](./linux-kvm.md) |
-| Emulator does not finish booting | Inspect `emulator.log` or `artifacts/headless-emulator.log` |
+| Emulator does not finish booting | Inspect `artifacts/emulator.log` or `artifacts/headless-emulator.log` |
 | Multiple ADB devices are connected | Use `adb -s SERIAL` |
 
 See [testing](./testing.md) for the checks performed during this documentation update. Mock tests do not verify this host's KVM or emulator behavior.
 
 ## Physical-device checks in v0.5.0
 
-After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check SERIAL=ABC123` and `make physical-device-facts SERIAL=ABC123` with the phone’s ADB serial. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

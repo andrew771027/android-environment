@@ -1,10 +1,8 @@
-# Android Environment v0.5.1
+# Android Environment
 
 Set up an Android SDK and emulator for Android Cookbook from the command line. Android Studio is optional.
 
-Version 0.5.1 adds draft host USB helpers and a `make usb-diagnostics` target. The entry point is currently incomplete and cannot run; use the manual commands in [USB diagnostics](./docs/usb-diagnostics.md). Unit results do not establish that this command works.
-
-Version 0.5.0 introduced physical-device discovery, ADB authorization checks, device facts, and read-only Fastboot detection. Commands select one authorized non-emulator ADB transport automatically or accept an explicit serial. Desktop startup also enables software GPU rendering by default. Desktop, headless, hosted emulator CI, and optional Build Tools workflows remain available.
+See the [roadmap](./roadmap.md) for version history and planned work.
 
 ## SDK target
 
@@ -72,11 +70,11 @@ The SDK property should report `36`. Use `adb -s SERIAL` when more than one devi
 
 ## Connect a physical device
 
-Install SDK Platform Tools and put `adb` and `fastboot` on `PATH`. Enable USB debugging, connect the phone, unlock it, and accept the RSA debugging prompt:
+Install SDK Platform Tools and put `adb` and `fastboot` on `PATH`. Enable USB debugging, connect the phone, unlock it, and accept the RSA debugging prompt. Leave `DEVICE_SERIAL` unset to select the only authorized physical device automatically.
 
 ```bash
-make physical-device-check
-make physical-device-facts
+make physical-device-check SERIAL=
+make physical-device-facts SERIAL=
 ```
 
 With multiple authorized devices, select one explicitly:
@@ -87,6 +85,8 @@ make physical-device-facts SERIAL=ABC123
 ```
 
 After manually entering a supported Fastboot mode, use `make fastboot-check SERIAL=ABC123`. This only checks visibility; it does not reboot, unlock, or flash the device. See [physical devices](./docs/physical-device.md) and [Fastboot](./docs/fastboot.md).
+
+If the device is missing from the ADB list, run `make usb-diagnostics` on Linux to check host USB visibility, group membership, and udev rule filenames. On macOS, the target checks whether `system_profiler` is available. See [USB diagnostics](./docs/usb-diagnostics.md) for the manual macOS listing command.
 
 ## Commands
 
@@ -104,7 +104,7 @@ After manually entering a supported Fastboot mode, use `make fastboot-check SERI
 | `make emulator-start` | Launch the configured AVD or reuse the first online emulator; wait for boot |
 | `make emulator-wait` | Wait for the first online emulator to finish booting |
 | `make emulator-status` | Report `STOPPED`, `BOOTING`, or `READY` |
-| `make emulator-stop` | Stop the first online emulator and wait for disconnection |
+| `make emulator-stop` | Send shutdown to the first online emulator and wait until none are online |
 | `make emulator-reset` | Wipe the configured AVD's user data and start it |
 | `make headless-start` | Launch on port 5554; wait for boot and verify the AVD name |
 | `make headless-status` | Report state and ready AVD identity at `emulator-5554`; fail if ADB listing fails |
@@ -113,10 +113,10 @@ After manually entering a supported Fastboot mode, use `make fastboot-check SERI
 | `make headless-smoke` | Run headless start, then smoke; leaves the emulator running |
 | `make hosted-ci-check` | Hosted preflight entry point; currently has known implementation defects; see the hosted CI guide |
 | `make hosted-emulator-ci` | Start, run smoke, and clean up this run’s emulator; refuses existing emulators |
-| `make physical-device-check [SERIAL=ABC123]` | Check the selected ADB transport is authorized |
-| `make physical-device-facts [SERIAL=ABC123]` | Print identity, Android version, SDK, and build fingerprint |
+| `make physical-device-check SERIAL=ABC123` | Check the selected ADB transport is authorized |
+| `make physical-device-facts SERIAL=ABC123` | Print identity, Android version, SDK, and build fingerprint |
 | `make fastboot-check SERIAL=` or `make fastboot-check SERIAL=ABC123` | List Fastboot serials or require a selected serial |
-| `make usb-diagnostics` | Draft USB diagnostic entry point; currently blocked by permissions and incomplete syntax |
+| `make usb-diagnostics` | List USB devices and report group and rule checks on Linux, or check for `system_profiler` on macOS |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
 | `make unit-test` | Run tests that do not require a real SDK or emulator |
@@ -144,13 +144,13 @@ python -m pip install 'pytest>=9.1.1,<10.0.0'
 make unit-test
 ```
 
-Pytest collects 113 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
+Pytest collects 115 unit cases and 2 integration cases. Unit cases use fake SDK commands and temporary host processes; they do not start an Android emulator. Lifecycle cases need permission to inspect and signal their own test processes. Integration tests require the baseline AVD and an already booted emulator:
 
 ```bash
 make integration-test
 ```
 
-See [testing](./docs/testing.md) for the v0.5.1 verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
+See [testing](./docs/testing.md) for verification results and coverage limits. The two integration tests check AVD listing and boot completion, not APK builds or the complete emulator start/stop lifecycle.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -191,6 +191,4 @@ Edit `config/android.env` to change defaults other than `ANDROID_HOME`; these as
 | Understand the tools | [Android ecosystem](./docs/android_ecosystem.md) |
 | Understand virtualization | [Emulator, VM, and Docker](./docs/android_emulator_vm_docker.md) |
 
-Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. SDK migration is outside this release. Separate [unit](./.github/workflows/ci.yml) and [hosted emulator](./.github/workflows/hosted-emulator.yml) workflows are configured. Their successful remote execution must be confirmed from GitHub Actions logs. The [roadmap](./roadmap.md) describes planned work.
-
-The documentation and `pyproject.toml` target version `0.5.0`. See [testing](./docs/testing.md) for current verification results and release checks.
+Defaults are in [config/android.env](./config/android.env); runtime package IDs are in [config/packages.txt](./config/packages.txt). `config/build-packages.txt` lists the baseline Build Tools package as a reference; current scripts derive it from `ANDROID_BUILD_TOOLS_VERSION` and do not read that file. Separate [unit](./.github/workflows/ci.yml) and [hosted emulator](./.github/workflows/hosted-emulator.yml) workflows are configured. Their successful remote execution must be confirmed from GitHub Actions logs.

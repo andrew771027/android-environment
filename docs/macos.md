@@ -127,10 +127,10 @@ This installs the configured Build Tools version, defaulting to 36.0.0. It is in
 | `adb` is missing | Run `make install-sdk`; check `platform-tools` on `PATH` |
 | No AVD is listed | Run `make create-avd`, then `emulator -list-avds` |
 | Acceleration is unavailable | Inspect `emulator -accel-check` and confirm the image ABI matches the host |
-| Boot times out | Inspect `emulator.log`; the process may still be running |
+| Boot times out | Inspect `artifacts/emulator.log`; the process may still be running |
 
 See [setup](./setup.md) for the SDK version scope, [emulator operation](./emulator.md) for daily commands, and [testing](./testing.md) for test results.
 
 ## Physical-device checks in v0.5.0
 
-After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check SERIAL=ABC123` and `make physical-device-facts SERIAL=ABC123` with the phone’s ADB serial. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

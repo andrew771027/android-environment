@@ -4,19 +4,19 @@ Use the physical-device commands to select an ADB transport, check authorization
 
 ## Host USB visibility
 
-If ADB does not list the phone, inspect host USB visibility first: `lsusb` on Linux or `system_profiler SPUSBDataType` on macOS. The v0.5.1 `make usb-diagnostics` entry point is incomplete and currently unusable. See [USB diagnostics](./usb-diagnostics.md) for manual checks and known defects.
+If ADB does not list the phone, inspect host USB visibility first: `lsusb` on Linux or `system_profiler SPUSBDataType` on macOS. On Linux, `make usb-diagnostics` also reports group membership and Android-related udev rule filenames. See [USB diagnostics](./usb-diagnostics.md) for platform behavior and test coverage.
 
 ## Connect and check
 
 1. Enable Developer Options and USB debugging on the phone.
 2. Connect a data-capable USB cable and unlock the phone.
 3. Accept the workstation's RSA debugging prompt.
-4. Check the connection:
+4. Check the connection. Leave `DEVICE_SERIAL` unset to select the only authorized physical device automatically.
 
 ```bash
 adb devices
-make physical-device-check
-make physical-device-facts
+make physical-device-check SERIAL=
+make physical-device-facts SERIAL=
 ```
 
 For an explicit serial:
@@ -33,7 +33,7 @@ The scripts accept a first positional argument, then fall back to the `DEVICE_SE
 DEVICE_SERIAL=ABC123 ./scripts/physical_device_facts.sh
 ```
 
-Make forwards `SERIAL` as the positional argument. A nonempty value takes precedence over `DEVICE_SERIAL`. These scripts do not source `config/android.env`.
+Make forwards `SERIAL` as the positional argument and defaults it to `emulator-5554`. To select the only authorized physical device automatically, pass `SERIAL=` and leave `DEVICE_SERIAL` unset. A nonempty value takes precedence over `DEVICE_SERIAL`. These scripts do not source `config/android.env`.
 
 ## Automatic selection
 
