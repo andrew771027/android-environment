@@ -1,6 +1,6 @@
 # Set up Android Environment
 
-This guide covers Android Environment v0.5.0. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
+This guide covers Android Environment v0.5.1. Complete the host prerequisites, install the SDK packages, then create and start an Android Virtual Device (AVD). Run repository commands from the repository root.
 
 ## SDK target
 
@@ -129,7 +129,7 @@ make headless-status
 
 Headless start checks platform acceleration: Hypervisor.Framework through the emulator on macOS, or KVM access on Linux x86_64. It requires no existing emulator in the ADB list. It uses port 5554. See [headless operation](./headless.md) before using it on a shared host.
 
-Both start commands wait for Android boot completion. If boot times out, inspect `emulator.log` for desktop mode or `artifacts/headless-emulator.log` for headless mode. A timeout does not automatically stop the background process.
+Both start commands wait for Android boot completion. If boot times out, inspect `artifacts/emulator.log` for desktop mode or `artifacts/headless-emulator.log` for headless mode. A timeout does not automatically stop the background process.
 
 ## 5. Verify and stop the device
 
@@ -159,4 +159,4 @@ For test setup and coverage, see [testing](./testing.md). For physical-device ac
 
 ## Physical-device checks in v0.5.0
 
-After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check` and `make physical-device-facts`. With multiple authorized devices, add `SERIAL=ABC123`. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).
+After enabling USB debugging and accepting the RSA prompt, run `make physical-device-check SERIAL=ABC123` and `make physical-device-facts SERIAL=ABC123` with the phone’s ADB serial. AVD creation and emulator acceleration are not required for these checks. See [physical devices](./physical-device.md) and the separate [Fastboot visibility check](./fastboot.md).

@@ -1,6 +1,6 @@
-# macOS headless support — v0.5.0
+# macOS headless support — v0.5.1
 
-The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.5.0. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
+The shared headless lifecycle was extended to macOS in v0.4.2 and remains available in v0.5.1. The launcher calls [check_acceleration.sh](../scripts/check_acceleration.sh) instead of directly requiring Linux/KVM. The ADB readiness and AVD identity checks remain shared across platforms.
 
 ## Platform behavior
 

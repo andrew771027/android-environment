@@ -1,4 +1,4 @@
-# Android Environment v0.5.0 — Emulator Smoke Test
+# Android Environment v0.5.1 — Emulator Smoke Test
 
 ## Overview
 

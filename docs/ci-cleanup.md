@@ -1,4 +1,4 @@
-# CI and cleanup — v0.5.0
+# CI and cleanup — v0.5.1
 
 Version 0.5.0 provides a local CI runner that starts a headless emulator, checks Android runtime capabilities, and attempts to stop the process created by that run. It does not reuse an existing emulator.
 

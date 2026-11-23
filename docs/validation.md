@@ -1,6 +1,6 @@
 # Validate the environment
 
-Use these checks at different stages of Android Environment v0.5.0 setup:
+Use these checks at different stages of Android Environment v0.5.1 setup:
 
 | Command | Checks | Requires a running emulator? |
 | --- | --- | --- |
@@ -71,4 +71,10 @@ The current tests do not exercise the provisioning validator end to end. See [te
 
 ## Check physical hardware
 
-Use `make physical-device-check [SERIAL=ABC123]` for ADB authorization and `make physical-device-facts [SERIAL=ABC123]` to print properties. These checks do not require an emulator. In a supported Fastboot mode, use `make fastboot-device-check [SERIAL=ABC123]` separately. Neither check transitions the device between modes. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
+Use `make physical-device-check SERIAL=ABC123` for ADB authorization and `make physical-device-facts SERIAL=ABC123` to print properties. These checks do not require an emulator. In a supported Fastboot mode, use `make fastboot-check SERIAL=ABC123` separately. Neither check transitions the device between modes. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
+
+## Check host USB visibility
+
+On Linux, run `make usb-diagnostics` to list USB devices and check `plugdev` membership and Android-related udev rule filenames. On macOS, run `system_profiler SPUSBDataType` for the USB listing. The Make target on macOS checks only whether `system_profiler` is available.
+
+Compare the host USB listing with `adb devices` to check the ADB transport separately. See [USB diagnostics](./usb-diagnostics.md) for platform behavior and test coverage.

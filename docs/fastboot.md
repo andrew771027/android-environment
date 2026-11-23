@@ -1,4 +1,4 @@
-# Fastboot visibility — v0.5.0
+# Fastboot visibility — v0.5.1
 
 ADB checks communicate with Android through `adbd`. Fastboot checks communicate with a device exposing a supported Fastboot interface, such as bootloader Fastboot or fastbootd. Run the checks separately for the device's current mode.
 
@@ -8,11 +8,9 @@ Install SDK Platform Tools and put `fastboot` on `PATH`. Manually place the devi
 
 ```bash
 fastboot devices
-make fastboot-device-check
-make fastboot-device-check SERIAL=ABC123
+make fastboot-check SERIAL=
+make fastboot-check SERIAL=ABC123
 ```
-
-The implemented Make target is `fastboot-device-check`. The Makefile also lists `fastboot-check` under `.PHONY`, but that name has no recipe and does not perform a check.
 
 You can invoke the script directly:
 

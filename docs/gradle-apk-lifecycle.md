@@ -1,4 +1,4 @@
-# Gradle and APK build lifecycle — v0.5.0
+# Gradle and APK build lifecycle — v0.5.1
 
 Android Environment provides SDK installation and optional Build Tools validation. An application repository provides the Gradle Wrapper, AGP configuration, source, resources, and build tasks. This guide explains that boundary; it is not a record of a successful Android Cookbook build.
 

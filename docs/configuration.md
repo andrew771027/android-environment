@@ -1,6 +1,6 @@
 # Configuration
 
-Android Environment v0.5.0 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
+Android Environment v0.5.1 reads defaults from [config/android.env](../config/android.env) and package IDs from [config/packages.txt](../config/packages.txt).
 
 ## SDK and AVD defaults
 
@@ -85,6 +85,6 @@ This release retains API 36 and the existing SDK management tools. See [setup](.
 
 ## Physical-device serial selection
 
-`physical-device-check`, `physical-device-facts`, and `fastboot-device-check` forward Make's `SERIAL` argument to their scripts. A nonempty positional serial takes precedence over the `DEVICE_SERIAL` environment variable. With neither set, ADB commands require exactly one authorized non-emulator transport; Fastboot lists all visible serials. These scripts do not source `config/android.env`. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
+`physical-device-check`, `physical-device-facts`, and `fastboot-check` forward Make's `SERIAL` argument to their scripts. A nonempty positional serial takes precedence over the `DEVICE_SERIAL` environment variable. The Makefile defaults `SERIAL` to `emulator-5554`. For automatic selection, pass `SERIAL=` to Make and leave `DEVICE_SERIAL` unset. With neither serial passed to the script, ADB commands require exactly one authorized non-emulator transport; Fastboot lists all visible serials. These scripts do not source `config/android.env`. See [physical devices](./physical-device.md) and [Fastboot](./fastboot.md).
 
 `EMULATOR_NO_GPU_ACCERLATION` uses the spelling currently in source. Edit it in `config/android.env`; its unconditional assignment overwrites an environment value. Desktop reset does not read this toggle.
