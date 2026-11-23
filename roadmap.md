@@ -32,11 +32,11 @@
 - `make physical-device-check`：自動選擇唯一 authorized non-emulator ADB transport，或以 `SERIAL` 指定；檢查 ADB state。
 - `make physical-device-facts`：列出 serial、manufacturer、model、product、codename、Android version、SDK 與 fingerprint。
 - 三個 scripts 使用非空 positional serial，其次為 `DEVICE_SERIAL`；自動 ADB selection 不包含 `emulator-` prefix，也不驗證 transport 是否為 USB。
-- `make fastboot-device-check`：列出 Fastboot serials，或確認指定 serial；不執行 reboot、unlock 或 flash。
+- `make fastboot-check SERIAL=`：列出 Fastboot serials，或確認指定 serial；不執行 reboot、unlock 或 flash。
 - 新增 24 個 fake-tool 單元案例。實機 USB／RSA、Fastboot 模式轉換與硬體診斷尚未驗證。
 - Desktop 新啟動預設增加 `-gpu software`，由 `config/android.env` 的 `EMULATOR_NO_GPU_ACCERLATION` 控制；不套用至 reset 或既有 emulator。
 
-使用方式見 [physical devices](./docs/physical-device.md)、[Fastboot](./docs/fastboot.md) 與 [configuration](./docs/configuration.md)。Makefile 的 `.PHONY` 仍列出沒有 recipe 的 `fastboot-check`，實際可執行入口為 `fastboot-device-check`。
+使用方式見 [physical devices](./docs/physical-device.md)、[Fastboot](./docs/fastboot.md) 與 [configuration](./docs/configuration.md)。Makefile 的 `.PHONY` 仍列出沒有 recipe 的 `fastboot-check`，實際可執行入口為 `fastboot-check`。
 
 ## v0.4.6 範圍
 

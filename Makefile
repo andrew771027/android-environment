@@ -1,5 +1,7 @@
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 
+SERIAL=emulator-5554
+
 .PHONY: \
 	bootstrap \
 	install-sdk \
@@ -95,7 +97,7 @@ physical-device-check:
 physical-device-facts:
 	./scripts/physical_device_facts.sh "$(SERIAL)"
 
-fastboot-device-check:
+fastboot-check:
 	./scripts/fastboot_check.sh "$(SERIAL)"
 
 usb-diagnostics:

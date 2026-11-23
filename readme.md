@@ -86,7 +86,7 @@ make physical-device-check SERIAL=ABC123
 make physical-device-facts SERIAL=ABC123
 ```
 
-After manually entering a supported Fastboot mode, use `make fastboot-device-check SERIAL=ABC123`. This only checks visibility; it does not reboot, unlock, or flash the device. See [physical devices](./docs/physical-device.md) and [Fastboot](./docs/fastboot.md).
+After manually entering a supported Fastboot mode, use `make fastboot-check SERIAL=ABC123`. This only checks visibility; it does not reboot, unlock, or flash the device. See [physical devices](./docs/physical-device.md) and [Fastboot](./docs/fastboot.md).
 
 ## Commands
 
@@ -115,7 +115,7 @@ After manually entering a supported Fastboot mode, use `make fastboot-device-che
 | `make hosted-emulator-ci` | Start, run smoke, and clean up this run’s emulator; refuses existing emulators |
 | `make physical-device-check [SERIAL=ABC123]` | Check the selected ADB transport is authorized |
 | `make physical-device-facts [SERIAL=ABC123]` | Print identity, Android version, SDK, and build fingerprint |
-| `make fastboot-device-check [SERIAL=ABC123]` | List Fastboot serials or require a selected serial |
+| `make fastboot-check SERIAL=` or `make fastboot-check SERIAL=ABC123` | List Fastboot serials or require a selected serial |
 | `make usb-diagnostics` | Draft USB diagnostic entry point; currently blocked by permissions and incomplete syntax |
 | `make devices` | Run `adb devices` |
 | `make shell` | Run `adb shell` |
