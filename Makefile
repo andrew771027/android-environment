@@ -27,6 +27,9 @@ SERIAL=emulator-5554
 	physical-device-facts \
 	fastboot-check \
 	usb-diagnostics \
+	adb-connection \
+	adb-recover \
+	adb-server-restart \
 	doctor \
 	validate \
 	devices \
@@ -102,6 +105,16 @@ fastboot-check:
 
 usb-diagnostics:
 	./scripts/usb_diagnostics.sh
+
+adb-connection:
+	./scripts/adb_connection.sh "$(SERIAL)"
+
+adb-recover:
+	./scripts/adb_recover.sh "$(SERIAL)"
+
+adb-server-restart:
+	adb kill-server
+	adb start-server
 
 doctor:
 	./scripts/doctor.sh
