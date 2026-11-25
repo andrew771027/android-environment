@@ -23,7 +23,7 @@ def make_fake_adb(
         "#!/usr/bin/env bash\n"
         "\n"
         'if [[ "$1" == "devices" ]]; then\n'
-        '   echo "List of devices attached\n'
+        '   echo "List of devices attached"\n'
         f'  printf "{SERIAL}\\t{state}\\n"\n'
         "   exit 0\n"
         "fi\n"
