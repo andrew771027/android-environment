@@ -37,6 +37,10 @@ def make_fake_adb(
         "   exit 0\n"
         "fi\n"
         "\n"
+        'if [[ "$1" == "start-server" ]]; then\n'
+        "   exit 0\n"
+        "fi\n"
+        "\n"
         "exit 1\n",
         encoding="utf-8",
     )

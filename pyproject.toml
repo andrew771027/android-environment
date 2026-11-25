@@ -6,12 +6,15 @@ authors = [
     {name = "Andrew Wang",email = "andew771027@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = [
-    "pytest (>=9.1.1,<10.0.0)",
-    "pre-commit (>=4.6.2,<5.0.0)"
-]
+requires-python = ">=3.11"
+dependencies = []
 
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.1.1,<10.0.0"
+pre-commit = ">=4.6.2,<5.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
