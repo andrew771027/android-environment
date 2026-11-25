@@ -296,7 +296,8 @@ def test_wait_for_ready_success(
     )
 
     result = run_bash(
-        f'wait_for_adb_ready "{SERIAL}" 1', 
+        f'wait_for_adb_ready "{SERIAL}" 1',
+        env=env,
     )
 
     assert result.returncode == 0

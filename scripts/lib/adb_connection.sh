@@ -20,6 +20,14 @@ adb_device_state(){
         '
 }
 
+adb_device_is_ready(){
+
+    local serial="${1:?serial required}"
+
+    [[ "$(adb_device_state "${serial}")" == "device" ]]
+    
+}
+
 adb_device_is_unauthorized(){
 
     local serial="${1:?serial required}"
