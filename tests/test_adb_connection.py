@@ -28,7 +28,7 @@ def make_fake_adb(
         "   exit 0\n"
         "fi\n"
         "\n"
-        'if [[ "$1 == "-s" && "$3" == "reconnect" ]]; then\n'
+        'if [[ "$1" == "-s" && "$3" == "reconnect" ]]; then\n'
         '   echo "reconnecting $2"\n'
         "   exit 0\n"
         "fi\n"
