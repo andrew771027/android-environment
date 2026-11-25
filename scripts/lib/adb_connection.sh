@@ -12,7 +12,7 @@ adb_device_state(){
     local serial="${1:?serial required}"
 
     adb devices | 
-        awk -v target="{serial}" '
+        awk -v target="${serial}" '
             NR > 1 && $1 == target {
                 print $2
                 exit
@@ -25,7 +25,7 @@ adb_device_is_ready(){
     local serial="${1:?serial required}"
 
     [[ "$(adb_device_state "${serial}")" == "device" ]]
-    
+
 }
 
 adb_device_is_unauthorized(){
